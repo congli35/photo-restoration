@@ -1,0 +1,7 @@
+# Syntax and Formatting
+
+This rule describes syntax and formatting rules used across the codebase.
+
+- Use the "function" keyword for pure functions.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+- Use declarative JSX.

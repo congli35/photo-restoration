@@ -1,0 +1,8 @@
+# Naming Conventions
+
+This rule describes what naming conventions to use for files, folders, components and methods.
+
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Use PascalCase for component names
+- Use camelCase for variables and method names
+- Favor named exports for components.

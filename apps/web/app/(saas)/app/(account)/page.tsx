@@ -1,7 +1,7 @@
 import { config } from "@repo/config";
 import { getOrganizationList, getSession } from "@saas/auth/lib/server";
+import { PhotoRestoration } from "@saas/restore/PhotoRestoration";
 import { PageHeader } from "@saas/shared/components/PageHeader";
-import UserStart from "@saas/start/UserStart";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
@@ -39,7 +39,7 @@ export default async function AppStartPage() {
 				subtitle={t("start.subtitle")}
 			/>
 
-			<UserStart />
+			<PhotoRestoration />
 		</div>
 	);
 }

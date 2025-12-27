@@ -28,7 +28,7 @@ export const config = {
 	// Organizations
 	organizations: {
 		// Whether organizations are enabled in general
-		enable: true,
+		enable: false,
 		// Whether billing for organizations should be enabled (below you can enable it for users instead)
 		enableBilling: false,
 		// Whether the organization should be hidden from the user (use this for multi-tenant applications)
@@ -102,7 +102,8 @@ export const config = {
 	storage: {
 		// define the name of the buckets for the different types of files
 		bucketNames: {
-			avatars: process.env.NEXT_PUBLIC_AVATARS_BUCKET_NAME ?? "avatars",
+			photoRestoration:
+				process.env.NEXT_PUBLIC_BUCKET_NAME ?? "photo-restoration",
 		},
 	},
 	contactForm: {

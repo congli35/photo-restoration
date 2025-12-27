@@ -76,6 +76,18 @@ export const AiChatScalarFieldEnumSchema = z.enum(['id', 'organizationId', 'user
 
 export type AiChatScalarFieldEnum = z.infer<typeof AiChatScalarFieldEnumSchema>;
 
+// File: ImageScalarFieldEnum.schema.ts
+
+export const ImageScalarFieldEnumSchema = z.enum(['id', 'userId', 'originalUrl', 'createdAt'])
+
+export type ImageScalarFieldEnum = z.infer<typeof ImageScalarFieldEnumSchema>;
+
+// File: RestoredImageScalarFieldEnum.schema.ts
+
+export const RestoredImageScalarFieldEnumSchema = z.enum(['id', 'imageId', 'fileUrl', 'status', 'createdAt'])
+
+export type RestoredImageScalarFieldEnum = z.infer<typeof RestoredImageScalarFieldEnumSchema>;
+
 // File: SortOrder.schema.ts
 
 export const SortOrderSchema = z.enum(['asc', 'desc'])
@@ -296,4 +308,29 @@ export const AiChatSchema = z.object({
 });
 
 export type AiChatType = z.infer<typeof AiChatSchema>;
+
+
+// File: Image.schema.ts
+
+export const ImageSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  originalUrl: z.string(),
+  createdAt: z.date(),
+});
+
+export type ImageType = z.infer<typeof ImageSchema>;
+
+
+// File: RestoredImage.schema.ts
+
+export const RestoredImageSchema = z.object({
+  id: z.string(),
+  imageId: z.string(),
+  fileUrl: z.string().nullish(),
+  status: z.string().default("PENDING"),
+  createdAt: z.date(),
+});
+
+export type RestoredImageType = z.infer<typeof RestoredImageSchema>;
 

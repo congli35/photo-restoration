@@ -1,0 +1,21 @@
+{
+	"dependencies": {
+		"@repo/ai": "workspace:*",
+		"@repo/database": "workspace:*",
+		"@repo/storage": "workspace:*",
+		"@trigger.dev/sdk": "4.3.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.1.0",
+		"@repo/tsconfig": "workspace:*",
+		"@trigger.dev/build": "4.3.1"
+	},
+	"main": "./index.ts",
+	"name": "@repo/tasks",
+	"scripts": {
+		"deploy": "pnpm dlx trigger.dev@latest deploy",
+		"dev": "pnpm dlx trigger.dev@latest dev --env-file ../../.env.local",
+		"type-check": "tsc --noEmit"
+	},
+	"version": "0.0.0"
+}

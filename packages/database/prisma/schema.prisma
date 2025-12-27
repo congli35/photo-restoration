@@ -40,6 +40,7 @@ model User {
   members            Member[]
   twofactors         TwoFactor[]
   aiChats            AiChat[]
+  images             Image[]
 
   @@unique([email])
   @@unique([username])
@@ -219,4 +220,28 @@ model AiChat {
   updatedAt      DateTime      @updatedAt
 
   @@map("ai_chat")
+}
+
+model Image {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  originalUrl  String
+  createdAt    DateTime        @default(now())
+  restorations RestoredImage[]
+
+  @@index([userId])
+  @@map("image")
+}
+
+model RestoredImage {
+  id        String   @id @default(cuid())
+  imageId   String
+  image     Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  fileUrl   String?
+  status    String   @default("PENDING") // PENDING, COMPLETED, FAILED
+  createdAt DateTime @default(now())
+
+  @@index([imageId])
+  @@map("restored_image")
 }

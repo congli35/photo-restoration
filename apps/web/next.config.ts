@@ -8,6 +8,11 @@ const withNextIntl = nextIntlPlugin("./modules/i18n/request.ts");
 
 const nextConfig: NextConfig = {
 	transpilePackages: ["@repo/api", "@repo/auth", "@repo/database"],
+	experimental: {
+		serverActions: {
+			bodySizeLimit: "50mb",
+		},
+	},
 	images: {
 		remotePatterns: [
 			{

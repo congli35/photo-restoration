@@ -49,7 +49,7 @@ const getS3Client = () => {
 
 export const getSignedUploadUrl: GetSignedUploadUrlHandler = async (
 	path,
-	{ bucket },
+	{ bucket, contentType = "image/jpeg" },
 ) => {
 	const s3Client = getS3Client();
 	try {
@@ -58,7 +58,7 @@ export const getSignedUploadUrl: GetSignedUploadUrlHandler = async (
 			new PutObjectCommand({
 				Bucket: bucket,
 				Key: path,
-				ContentType: "image/jpeg",
+				ContentType: contentType,
 			}),
 			{
 				expiresIn: 60,
@@ -85,5 +85,27 @@ export const getSignedUrl: GetSignedUrlHander = async (
 	} catch (e) {
 		logger.error(e);
 		throw new Error("Could not get signed url");
+	}
+};
+
+export const uploadFile = async (
+	path: string,
+	body: Buffer | string | Uint8Array,
+	contentType: string,
+	{ bucket }: { bucket: string },
+) => {
+	const s3Client = getS3Client();
+	try {
+		await s3Client.send(
+			new PutObjectCommand({
+				Bucket: bucket,
+				Key: path,
+				Body: body,
+				ContentType: contentType,
+			}),
+		);
+	} catch (e) {
+		logger.error(e);
+		throw new Error("Could not upload file");
 	}
 };

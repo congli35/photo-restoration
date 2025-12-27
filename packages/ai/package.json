@@ -3,6 +3,7 @@
 		"@ai-sdk/anthropic": "^2.0.44",
 		"@ai-sdk/openai": "^2.0.65",
 		"@ai-sdk/react": "^2.0.93",
+		"@google/genai": "^1.34.0",
 		"ai": "^5.0.93",
 		"openai": "^6.9.0"
 	},

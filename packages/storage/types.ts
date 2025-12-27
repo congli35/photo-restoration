@@ -9,6 +9,7 @@ export type GetSignedUploadUrlHandler = (
 	path: string,
 	options: {
 		bucket: string;
+		contentType?: string;
 	},
 ) => Promise<string>;
 

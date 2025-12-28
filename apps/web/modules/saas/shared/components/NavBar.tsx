@@ -8,7 +8,9 @@ import { cn } from "@ui/lib";
 import {
 	BotMessageSquareIcon,
 	ChevronRightIcon,
+	CoinsIcon,
 	HomeIcon,
+	ImageIcon,
 	SettingsIcon,
 	UserCog2Icon,
 	UserCogIcon,
@@ -36,6 +38,18 @@ export function NavBar() {
 			href: basePath,
 			icon: HomeIcon,
 			isActive: pathname === basePath,
+		},
+		{
+			label: t("app.menu.myPhotos"),
+			href: "/app/my-photos",
+			icon: ImageIcon,
+			isActive: pathname.startsWith("/app/my-photos"),
+		},
+		{
+			label: t("app.menu.myCredits"),
+			href: "/app/my-credits",
+			icon: CoinsIcon,
+			isActive: pathname.startsWith("/app/my-credits"),
 		},
 		{
 			label: t("app.menu.aiChatbot"),

@@ -74,6 +74,8 @@
 			"accountSettings": "Account settings",
 			"admin": "Admin",
 			"aiChatbot": "AI Chatbot",
+			"myCredits": "My Credits",
+			"myPhotos": "My Photos",
 			"organizationSettings": "Organization settings",
 			"start": "Start"
 		},
@@ -83,6 +85,36 @@
 			"documentation": "Documentation",
 			"home": "Home",
 			"logout": "Logout"
+		}
+	},
+	"credits": {
+		"title": "My Credits",
+		"subtitle": "Manage your credits and view transaction history.",
+		"balance": {
+			"title": "Current Balance",
+			"credits": "{count} {count, plural, one {credit} other {credits}}",
+			"lastUpdated": "Last updated {date}"
+		},
+		"topup": {
+			"title": "Top Up Credits",
+			"description": "Add more credits to your account.",
+			"amount": "Amount",
+			"submit": "Add Credits",
+			"notifications": {
+				"success": "Successfully added {amount} credits to your account.",
+				"error": "Failed to add credits. Please try again."
+			}
+		},
+		"history": {
+			"title": "Transaction History",
+			"empty": "No transactions yet.",
+			"loadMore": "Load more",
+			"types": {
+				"TOPUP": "Top Up",
+				"CONSUMPTION": "Used",
+				"REFUND": "Refund",
+				"ADJUSTMENT": "Adjustment"
+			}
 		}
 	},
 	"auth": {

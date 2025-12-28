@@ -74,6 +74,8 @@
 			"accountSettings": "Kontoeinstellungen",
 			"admin": "Administration",
 			"aiChatbot": "AI Chatbot",
+			"myCredits": "Meine Credits",
+			"myPhotos": "Meine Fotos",
 			"organizationSettings": "Organisationseinstellungen",
 			"start": "Start"
 		},
@@ -83,6 +85,36 @@
 			"documentation": "Dokumentation",
 			"home": "Startseite",
 			"logout": "Abmelden"
+		}
+	},
+	"credits": {
+		"title": "Meine Credits",
+		"subtitle": "Verwalte deine Credits und sieh dir den Transaktionsverlauf an.",
+		"balance": {
+			"title": "Aktueller Kontostand",
+			"credits": "{count} {count, plural, one {Credit} other {Credits}}",
+			"lastUpdated": "Zuletzt aktualisiert {date}"
+		},
+		"topup": {
+			"title": "Credits aufladen",
+			"description": "Füge deinem Konto mehr Credits hinzu.",
+			"amount": "Betrag",
+			"submit": "Credits hinzufügen",
+			"notifications": {
+				"success": "Erfolgreich {amount} Credits zu deinem Konto hinzugefügt.",
+				"error": "Credits konnten nicht hinzugefügt werden. Bitte versuche es erneut."
+			}
+		},
+		"history": {
+			"title": "Transaktionsverlauf",
+			"empty": "Noch keine Transaktionen.",
+			"loadMore": "Mehr laden",
+			"types": {
+				"TOPUP": "Aufladung",
+				"CONSUMPTION": "Verbraucht",
+				"REFUND": "Erstattung",
+				"ADJUSTMENT": "Anpassung"
+			}
 		}
 	},
 	"auth": {

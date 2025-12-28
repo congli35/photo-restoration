@@ -41,6 +41,8 @@ model User {
   twofactors         TwoFactor[]
   aiChats            AiChat[]
   images             Image[]
+  creditBalance      CreditBalance?
+  creditTransactions CreditTransaction[]
 
   @@unique([email])
   @@unique([username])
@@ -189,6 +191,13 @@ enum PurchaseType {
   ONE_TIME
 }
 
+enum CreditTransactionType {
+  TOPUP
+  CONSUMPTION
+  REFUND
+  ADJUSTMENT
+}
+
 model Purchase {
   id             String        @id @default(cuid())
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -235,13 +244,43 @@ model Image {
 }
 
 model RestoredImage {
-  id        String   @id @default(cuid())
-  imageId   String
-  image     Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
-  fileUrl   String?
-  status    String   @default("PENDING") // PENDING, COMPLETED, FAILED
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  imageId     String
+  image       Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  fileUrl     String?
+  status      String   @default("PENDING") // PENDING, COMPLETED, FAILED
+  creditsUsed Int?
+  createdAt   DateTime @default(now())
 
   @@index([imageId])
   @@map("restored_image")
+}
+
+model CreditBalance {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("credit_balance")
+}
+
+model CreditTransaction {
+  id                String                @id @default(cuid())
+  userId            String
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              CreditTransactionType
+  amount            Int
+  balanceAfter      Int
+  reason            String?
+  relatedEntityId   String?
+  relatedEntityType String?
+  metadata          Json?
+  createdAt         DateTime              @default(now())
+
+  @@index([userId, createdAt])
+  @@map("credit_transaction")
 }

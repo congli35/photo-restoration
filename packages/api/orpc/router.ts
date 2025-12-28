@@ -2,6 +2,7 @@ import type { RouterClient } from "@orpc/server";
 import { adminRouter } from "../modules/admin/router";
 import { aiRouter } from "../modules/ai/router";
 import { contactRouter } from "../modules/contact/router";
+import { creditsRouter } from "../modules/credits/router";
 import { newsletterRouter } from "../modules/newsletter/router";
 import { organizationsRouter } from "../modules/organizations/router";
 import { paymentsRouter } from "../modules/payments/router";
@@ -16,6 +17,7 @@ export const router = publicProcedure.router({
 	users: usersRouter,
 	payments: paymentsRouter,
 	ai: aiRouter,
+	credits: creditsRouter,
 });
 
 export type ApiRouterClient = RouterClient<typeof router>;

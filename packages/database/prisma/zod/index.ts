@@ -84,9 +84,21 @@ export type ImageScalarFieldEnum = z.infer<typeof ImageScalarFieldEnumSchema>;
 
 // File: RestoredImageScalarFieldEnum.schema.ts
 
-export const RestoredImageScalarFieldEnumSchema = z.enum(['id', 'imageId', 'fileUrl', 'status', 'createdAt'])
+export const RestoredImageScalarFieldEnumSchema = z.enum(['id', 'imageId', 'fileUrl', 'status', 'creditsUsed', 'createdAt'])
 
 export type RestoredImageScalarFieldEnum = z.infer<typeof RestoredImageScalarFieldEnumSchema>;
+
+// File: CreditBalanceScalarFieldEnum.schema.ts
+
+export const CreditBalanceScalarFieldEnumSchema = z.enum(['id', 'userId', 'balance', 'createdAt', 'updatedAt'])
+
+export type CreditBalanceScalarFieldEnum = z.infer<typeof CreditBalanceScalarFieldEnumSchema>;
+
+// File: CreditTransactionScalarFieldEnum.schema.ts
+
+export const CreditTransactionScalarFieldEnumSchema = z.enum(['id', 'userId', 'type', 'amount', 'balanceAfter', 'reason', 'relatedEntityId', 'relatedEntityType', 'metadata', 'createdAt'])
+
+export type CreditTransactionScalarFieldEnum = z.infer<typeof CreditTransactionScalarFieldEnumSchema>;
 
 // File: SortOrder.schema.ts
 
@@ -99,6 +111,12 @@ export type SortOrder = z.infer<typeof SortOrderSchema>;
 export const JsonNullValueInputSchema = z.enum(['JsonNull'])
 
 export type JsonNullValueInput = z.infer<typeof JsonNullValueInputSchema>;
+
+// File: NullableJsonNullValueInput.schema.ts
+
+export const NullableJsonNullValueInputSchema = z.enum(['DbNull', 'JsonNull'])
+
+export type NullableJsonNullValueInput = z.infer<typeof NullableJsonNullValueInputSchema>;
 
 // File: QueryMode.schema.ts
 
@@ -123,6 +141,12 @@ export type JsonNullValueFilter = z.infer<typeof JsonNullValueFilterSchema>;
 export const PurchaseTypeSchema = z.enum(['SUBSCRIPTION', 'ONE_TIME'])
 
 export type PurchaseType = z.infer<typeof PurchaseTypeSchema>;
+
+// File: CreditTransactionType.schema.ts
+
+export const CreditTransactionTypeSchema = z.enum(['TOPUP', 'CONSUMPTION', 'REFUND', 'ADJUSTMENT'])
+
+export type CreditTransactionType = z.infer<typeof CreditTransactionTypeSchema>;
 
 // File: User.schema.ts
 
@@ -329,8 +353,39 @@ export const RestoredImageSchema = z.object({
   imageId: z.string(),
   fileUrl: z.string().nullish(),
   status: z.string().default("PENDING"),
+  creditsUsed: z.number().int().nullish(),
   createdAt: z.date(),
 });
 
 export type RestoredImageType = z.infer<typeof RestoredImageSchema>;
 
+
+// File: CreditBalance.schema.ts
+
+export const CreditBalanceSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  balance: z.number().int(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type CreditBalanceType = z.infer<typeof CreditBalanceSchema>;
+
+
+// File: CreditTransaction.schema.ts
+
+export const CreditTransactionSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  type: CreditTransactionTypeSchema,
+  amount: z.number().int(),
+  balanceAfter: z.number().int(),
+  reason: z.string().nullish(),
+  relatedEntityId: z.string().nullish(),
+  relatedEntityType: z.string().nullish(),
+  metadata: z.unknown().refine((val) => { const getDepth = (obj: unknown, depth: number = 0): number => { if (depth > 10) return depth; if (obj === null || typeof obj !== 'object') return depth; const values = Object.values(obj as Record<string, unknown>); if (values.length === 0) return depth; return Math.max(...values.map(v => getDepth(v, depth + 1))); }; return getDepth(val) <= 10; }, "JSON nesting depth exceeds maximum of 10").nullish(),
+  createdAt: z.date(),
+});
+
+export type CreditTransactionModel = z.infer<typeof CreditTransactionSchema>;

@@ -340,133 +340,137 @@ export function PhotoRestoration() {
 							)}
 						</div>
 
-						{/* Image Gallery - Show thumbnails when multiple images */}
-						{restoredImages.length > 1 && (
-							<div className="w-full">
-								<h3 className="text-sm font-semibold mb-3 text-muted-foreground">
-									{restoredImages.length} Variations Generated
-								</h3>
-								<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-									{restoredImages.map((image, index) => (
-										<button
-											key={image.id}
-											onClick={() =>
-												setSelectedImageIndex(index)
-											}
-											className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-												selectedImageIndex === index
-													? "border-primary ring-2 ring-primary/20 scale-105"
-													: "border-border hover:border-primary/50"
-											}`}
-										>
-											<img
-												src={image.url}
-												alt={`Variation ${index + 1}`}
-												className="w-full h-full object-cover"
-											/>
-											<div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-xs text-white">
-												#{index + 1}
-											</div>
-										</button>
-									))}
-								</div>
-							</div>
-						)}
-
-						{/* Comparison Slider */}
-						<div className="relative w-full bg-muted rounded-xl shadow-2xl overflow-hidden group border border-border">
-							{isProcessing && (
-								<div className="absolute inset-0 z-30 flex items-center justify-center gap-3 bg-black/40 backdrop-blur-sm text-white">
-									<Loader2 className="h-5 w-5 animate-spin" />
-									<span className="text-sm font-semibold text-center">
-										Restoring photo… credit is only deducted after all versions finish.
-									</span>
-								</div>
-							)}
-							{/* Background Grid */}
-							<div
-								className="absolute inset-0 opacity-10 pointer-events-none"
-								style={{
-									backgroundImage:
-										"radial-gradient(currentColor 1px, transparent 1px)",
-									backgroundSize: "20px 20px",
-								}}
-							/>
-
-							{/* Container for images */}
-							<div className="relative w-full" ref={containerRef}>
-								{/* Original Image (Left Side / Underneath) */}
-								<div className="relative w-full">
-									<img
-										src={originalPreview}
-										alt="Original"
-										className="w-full h-auto block"
-									/>
-									<div className="absolute top-6 left-6 z-20">
-										<div className="bg-black/40 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-lg shadow-lg flex items-center gap-3 transition-transform hover:scale-105 duration-300">
-											<div className="flex flex-col text-start">
-												<span className="text-sm font-bold text-white tracking-wide">
-													Original
-												</span>
-											</div>
-										</div>
+						<div className="grid w-full items-stretch gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+							{/* Comparison Slider */}
+							<div className="relative w-full bg-muted rounded-xl shadow-2xl overflow-hidden group border border-border">
+								{isProcessing && (
+									<div className="absolute inset-0 z-30 flex items-center justify-center gap-3 bg-black/40 backdrop-blur-sm text-white">
+										<Loader2 className="h-5 w-5 animate-spin" />
+										<span className="text-sm font-semibold text-center">
+											Restoring photo… credit is only deducted after all versions finish.
+										</span>
 									</div>
-								</div>
+								)}
+								{/* Background Grid */}
+								<div
+									className="absolute inset-0 opacity-10 pointer-events-none"
+									style={{
+										backgroundImage:
+											"radial-gradient(currentColor 1px, transparent 1px)",
+										backgroundSize: "20px 20px",
+									}}
+								/>
 
-								{/* Restored Image (Overlaid, clipped) */}
-								{selectedRestoredImage && (
-									<div
-										className="absolute inset-0 w-full h-full select-none overflow-hidden"
-										style={{
-											clipPath: `polygon(${sliderPosition}% 0, 100% 0, 100% 100%, ${sliderPosition}% 100%)`,
-										}}
-									>
+								{/* Container for images */}
+								<div className="relative w-full" ref={containerRef}>
+									{/* Original Image (Left Side / Underneath) */}
+									<div className="relative w-full">
 										<img
-											src={selectedRestoredImage.url}
-											alt="Restored"
-											className="w-full h-full object-cover"
+											src={originalPreview}
+											alt="Original"
+											className="w-full h-auto block"
 										/>
-										<div className="absolute top-6 right-6 z-20">
-											<div className="bg-primary/90 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-lg shadow-glow flex items-center gap-3 transition-transform hover:scale-105 duration-300">
-												<div className="flex flex-col items-end">
-													<span className="text-sm font-bold text-white tracking-wide flex items-center gap-1">
-														AI Enhanced
-														<Sparkles className="w-3.5 h-3.5" />
+										<div className="absolute top-6 left-6 z-20">
+											<div className="bg-black/40 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-lg shadow-lg flex items-center gap-3 transition-transform hover:scale-105 duration-300">
+												<div className="flex flex-col text-start">
+													<span className="text-sm font-bold text-white tracking-wide">
+														Original
 													</span>
 												</div>
 											</div>
 										</div>
 									</div>
-								)}
 
-								{/* Slider Handle */}
-								{selectedRestoredImage && (
-									<div
-										className="absolute inset-y-0 left-1/2 w-0.5 bg-white/50 z-20 cursor-ew-resize group-hover:bg-white transition-colors duration-200"
-										style={{ left: `${sliderPosition}%` }}
-									>
-										<div className="absolute inset-y-0 -left-16 w-32 bg-transparent z-40 cursor-ew-resize" />
-										<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-12 bg-white/10 backdrop-blur-md rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_8px_16px_rgba(0,0,0,0.3)] flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-active:scale-95">
-											<div className="size-8 bg-white rounded-full flex items-center justify-center text-primary shadow-sm relative">
-												<Code className="w-5 h-5 font-bold" />
+									{/* Restored Image (Overlaid, clipped) */}
+									{selectedRestoredImage && (
+										<div
+											className="absolute inset-0 w-full h-full select-none overflow-hidden"
+											style={{
+												clipPath: `polygon(${sliderPosition}% 0, 100% 0, 100% 100%, ${sliderPosition}% 100%)`,
+											}}
+										>
+											<img
+												src={selectedRestoredImage.url}
+												alt="Restored"
+												className="w-full h-full object-cover"
+											/>
+											<div className="absolute top-6 right-6 z-20">
+												<div className="bg-primary/90 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-lg shadow-glow flex items-center gap-3 transition-transform hover:scale-105 duration-300">
+													<div className="flex flex-col items-end">
+														<span className="text-sm font-bold text-white tracking-wide flex items-center gap-1">
+															AI Enhanced
+															<Sparkles className="w-3.5 h-3.5" />
+														</span>
+													</div>
+												</div>
 											</div>
-											<div className="absolute inset-0 rounded-full border-2 border-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
 										</div>
-										<div className="absolute top-0 bottom-0 -left-[1px] w-[3px] bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
-									</div>
-								)}
+									)}
 
-								{/* Hidden Range Input for Interaction */}
-								{selectedRestoredImage && (
-									<input
-										type="range"
-										min="0"
-										max="100"
-										value={sliderPosition}
-										onChange={handleSliderChange}
-										className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-30"
-										style={{ margin: 0 }}
-									/>
+									{/* Slider Handle */}
+									{selectedRestoredImage && (
+										<div
+											className="absolute inset-y-0 left-1/2 w-0.5 bg-white/50 z-20 cursor-ew-resize group-hover:bg-white transition-colors duration-200"
+											style={{ left: `${sliderPosition}%` }}
+										>
+											<div className="absolute inset-y-0 -left-16 w-32 bg-transparent z-40 cursor-ew-resize" />
+											<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-12 bg-white/10 backdrop-blur-md rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_8px_16px_rgba(0,0,0,0.3)] flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-active:scale-95">
+												<div className="size-8 bg-white rounded-full flex items-center justify-center text-primary shadow-sm relative">
+													<Code className="w-5 h-5 font-bold" />
+												</div>
+												<div className="absolute inset-0 rounded-full border-2 border-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
+											</div>
+											<div className="absolute top-0 bottom-0 -left-[1px] w-[3px] bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+										</div>
+									)}
+
+									{/* Hidden Range Input for Interaction */}
+									{selectedRestoredImage && (
+										<input
+											type="range"
+											min="0"
+											max="100"
+											value={sliderPosition}
+											onChange={handleSliderChange}
+											className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-30"
+											style={{ margin: 0 }}
+										/>
+									)}
+								</div>
+							</div>
+
+							<div className="flex h-full w-full flex-col overflow-hidden rounded-xl border border-border bg-muted/30">
+								<div className="flex items-center justify-between border-b border-border px-4 py-3 text-sm font-semibold text-muted-foreground">
+									<span>Restored Images</span>
+									<span>{restoredImages.length}</span>
+								</div>
+								{restoredImages.length > 0 ? (
+									<div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+										{restoredImages.map((image, index) => (
+											<button
+												key={image.id}
+												onClick={() => setSelectedImageIndex(index)}
+												className={`relative w-full overflow-hidden rounded-lg border-2 transition-all ${
+													selectedImageIndex === index
+														? "border-primary ring-2 ring-primary/20"
+														: "border-border hover:border-primary/50"
+												}`}
+											>
+												<img
+													src={image.url}
+													alt={`Variation ${index + 1}`}
+													className="h-32 w-full object-cover"
+												/>
+												<div className="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-xs text-white">
+													#{index + 1}
+												</div>
+											</button>
+										))}
+									</div>
+								) : (
+									<div className="flex min-h-[240px] items-center justify-center px-4 text-sm text-muted-foreground">
+										No restored images yet.
+									</div>
 								)}
 							</div>
 						</div>

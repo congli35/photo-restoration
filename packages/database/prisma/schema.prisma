@@ -249,7 +249,7 @@ model RestoredImage {
   image       Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
   fileUrl     String?
   status      String   @default("PENDING") // PENDING, COMPLETED, FAILED
-  creditsUsed Int?
+  creditsUsed Int? // Number of credits consumed for this restoration
   createdAt   DateTime @default(now())
 
   @@index([imageId])

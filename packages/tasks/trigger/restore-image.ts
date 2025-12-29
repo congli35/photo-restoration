@@ -5,8 +5,8 @@ import { task } from "@trigger.dev/sdk/v3";
 
 export const restoreImageTask = task({
 	id: "restore-image",
-	run: async (payload: { imageId: string }) => {
-		const { imageId } = payload;
+	run: async (payload: { imageId: string; imageCount?: number }) => {
+		const { imageId, imageCount: inputImageCount } = payload;
 		console.log("[restore-image] Task started", { imageId });
 
 		const bucket = process.env.NEXT_PUBLIC_PHOTO_RESTORATION_BUCKET_NAME;
@@ -18,11 +18,15 @@ export const restoreImageTask = task({
 			);
 		}
 
-		// Get the number of images to generate from env variable (default to 1)
-		const imageCount = Number.parseInt(
-			process.env.RESTORATION_IMAGE_COUNT || "1",
+		// Get the number of images to generate (payload overrides env default)
+		const envDefault = Number.parseInt(
+			process.env.RESTORATION_IMAGE_COUNT || "3",
 			10,
 		);
+		const imageCount =
+			typeof inputImageCount === "number" && inputImageCount > 0
+				? inputImageCount
+				: envDefault;
 		console.log("[restore-image] Configuration", { bucket, imageCount });
 
 		// 1. Fetch the Image record from database
@@ -227,6 +231,41 @@ export const restoreImageTask = task({
 					count: results.length,
 				},
 			);
+
+			// Consume one credit after successful generation
+			await prisma.$transaction(async (tx) => {
+				const balance = await tx.creditBalance.upsert({
+					where: { userId },
+					create: { userId, balance: 0 },
+					update: {},
+				});
+
+				if (balance.balance < 1) {
+					throw new Error("Insufficient credits");
+				}
+
+				const updatedBalance = await tx.creditBalance.update({
+					where: { userId },
+					data: {
+						balance: { decrement: 1 },
+					},
+				});
+
+				await tx.creditTransaction.create({
+					data: {
+						userId,
+						type: "CONSUMPTION",
+						amount: 1,
+						balanceAfter: updatedBalance.balance,
+						reason: "Photo restoration",
+						relatedEntityId: imageRecord.id,
+						relatedEntityType: "IMAGE",
+						metadata: {
+							imageCount: results.length,
+						},
+					},
+				});
+			});
 
 			return {
 				imageId: imageRecord.id,

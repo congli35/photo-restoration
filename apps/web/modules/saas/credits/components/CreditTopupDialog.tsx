@@ -13,14 +13,10 @@ import {
 } from "@ui/components/dialog";
 import { Input } from "@ui/components/input";
 import { Label } from "@ui/components/label";
+import { cn } from "@ui/lib";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-
-interface CreditTopupDialogProps {
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-}
 
 export function CreditTopupDialog({
 	open,
@@ -46,45 +42,66 @@ export function CreditTopupDialog({
 		}
 	};
 
-	const presetAmounts = [10, 25, 50, 100];
-
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>{t("credits.topup.title")}</DialogTitle>
+			<DialogContent className="relative overflow-hidden border-border/70 bg-[linear-gradient(160deg,rgba(78,109,245,0.08)_0%,rgba(255,255,255,0)_60%)]">
+				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(700px_circle_at_-10%_-20%,rgba(78,109,245,0.18),transparent_60%)]" />
+				<DialogHeader className="relative">
+					<DialogTitle className="text-2xl">
+						{t("credits.topup.title")}
+					</DialogTitle>
 					<DialogDescription>
 						{t("credits.topup.description")}
 					</DialogDescription>
 				</DialogHeader>
-				<form onSubmit={handleSubmit}>
-					<div className="grid gap-4 py-4">
+				<form onSubmit={handleSubmit} className="relative">
+					<div className="grid gap-5 py-4">
 						<div className="grid gap-2">
 							<Label htmlFor="amount">
 								{t("credits.topup.amount")}
 							</Label>
-							<Input
-								id="amount"
-								type="number"
-								min={1}
-								value={amount}
-								onChange={(e) =>
-									setAmount(Number.parseInt(e.target.value) || 0)
-								}
-							/>
+							<div className="relative">
+								<Input
+									id="amount"
+									type="number"
+									min={1}
+									value={amount}
+									onChange={(e) => {
+										const nextValue = Number.parseInt(
+											e.target.value,
+											10,
+										);
+										setAmount(Number.isNaN(nextValue) ? 0 : nextValue);
+									}}
+									className="h-12 pr-16 text-lg font-semibold"
+								/>
+								<div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+									Credits
+								</div>
+							</div>
 						</div>
-						<div className="flex flex-wrap gap-2">
-							{presetAmounts.map((preset) => (
-								<Button
-									key={preset}
-									type="button"
-									variant={amount === preset ? "primary" : "outline"}
-									size="sm"
-									onClick={() => setAmount(preset)}
-								>
-									{preset}
-								</Button>
-							))}
+						<div className="grid gap-2">
+							<div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+								{t("credits.topup.amount")}
+							</div>
+							<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+								{presetAmounts.map((preset) => (
+									<Button
+										key={preset}
+										type="button"
+										variant="outline"
+										size="sm"
+										onClick={() => setAmount(preset)}
+										className={cn(
+											"h-10 rounded-xl text-sm font-semibold",
+											amount === preset &&
+												"border-primary/40 bg-primary/10 text-primary",
+										)}
+									>
+										{preset}
+									</Button>
+								))}
+							</div>
 						</div>
 					</div>
 					<DialogFooter>
@@ -107,4 +124,11 @@ export function CreditTopupDialog({
 			</DialogContent>
 		</Dialog>
 	);
+}
+
+const presetAmounts = [10, 25, 50, 100];
+
+interface CreditTopupDialogProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
 }

@@ -108,7 +108,16 @@
 		"history": {
 			"title": "Transaktionsverlauf",
 			"empty": "Noch keine Transaktionen.",
+			"filteredEmpty": "Keine Transaktionen passen zu den ausgewählten Filtern.",
 			"loadMore": "Mehr laden",
+			"filters": {
+				"type": "Typ",
+				"from": "Von",
+				"to": "Bis",
+				"allTypes": "Alle Typen",
+				"clear": "Filter zurücksetzen",
+				"results": "{count} {count, plural, one {Ergebnis} other {Ergebnisse}}"
+			},
 			"types": {
 				"TOPUP": "Aufladung",
 				"CONSUMPTION": "Verbraucht",

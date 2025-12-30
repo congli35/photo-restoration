@@ -108,7 +108,16 @@
 		"history": {
 			"title": "Transaction History",
 			"empty": "No transactions yet.",
+			"filteredEmpty": "No transactions match the selected filters.",
 			"loadMore": "Load more",
+			"filters": {
+				"type": "Type",
+				"from": "From",
+				"to": "To",
+				"allTypes": "All types",
+				"clear": "Clear filters",
+				"results": "{count} {count, plural, one {result} other {results}}"
+			},
 			"types": {
 				"TOPUP": "Top Up",
 				"CONSUMPTION": "Used",
@@ -733,7 +742,7 @@
 		"save": "Save"
 	},
 	"start": {
-	"subtitle": "Bring old photos back to life.",
+		"subtitle": "Bring old photos back to life.",
 		"welcome": "Welcome {name}!"
 	},
 	"zod": {

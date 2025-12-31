@@ -12,6 +12,7 @@ import {
 import { cn } from "@ui/lib";
 import { Download, Loader2, Sparkles, Upload } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { ImageCompareSlider } from "@shared/components/ImageCompareSlider";
 import {
 	useCreateImageUploadUrl,
 	useRestorationStatusQuery,
@@ -197,8 +198,8 @@ export function PhotoRestoration() {
 		return () => resizeObserver.disconnect();
 	}, [originalPreview, restoredImages, selectedImageIndex]);
 
-	const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setSliderPosition(Number(e.target.value));
+	const handleSliderChange = (value: number) => {
+		setSliderPosition(value);
 	};
 
 	const selectedRestoredImage = restoredImages[selectedImageIndex] ?? null;
@@ -346,82 +347,52 @@ export function PhotoRestoration() {
 												{selectedRestoredImage ? "Enhanced" : "Awaiting Output"}
 											</span>
 										</div>
-										<div className="relative" ref={beforeAfterRef}>
-											{isProcessing && (
-												<div className="absolute inset-0 z-30 flex items-center justify-center gap-3 bg-background/70 backdrop-blur-sm">
-													<Loader2 className="h-5 w-5 animate-spin text-primary" />
-													<span className="text-sm font-medium text-foreground">
-														Restoring photo... credits apply after completion.
-													</span>
-												</div>
-											)}
-											<div className="relative">
-												<img
-													src={originalPreview}
-													alt="Original"
-													className="w-full object-cover transition duration-700 group-hover:scale-[1.01]"
-												/>
-												{selectedRestoredImage ? (
-													<div
-														className="absolute inset-0 z-20"
-														style={{
-															clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)`,
-														}}
-													>
-														<div className="absolute left-4 top-4 rounded-full border border-white/30 bg-black/50 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
-															Original
-														</div>
+										<ImageCompareSlider
+											frameRef={beforeAfterRef}
+											frameClassName="relative"
+											beforeImage={{
+												src: originalPreview,
+												alt: "Original",
+												className:
+													"w-full object-cover transition duration-700 group-hover:scale-[1.01]",
+											}}
+											afterImage={
+												selectedRestoredImage
+													? {
+															src: selectedRestoredImage.url,
+															alt: "Restored",
+															className:
+																"h-full w-full object-cover transition duration-700 group-hover:scale-[1.01]",
+														}
+													: null
+											}
+											beforeLabel={
+												<span className="rounded-full border border-white/30 bg-black/50 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
+													Original
+												</span>
+											}
+											afterLabel={
+												<span className="flex items-center gap-2 rounded-full border border-white/30 bg-primary/80 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
+													<Sparkles className="size-3" /> AI Enhanced
+												</span>
+											}
+											handle={<Sparkles className="h-5 w-5" />}
+											handleClassName="bg-white/90 text-primary shadow-[0_15px_30px_rgba(0,0,0,0.25)] transition duration-300 group-hover:scale-105"
+											overlay={
+												isProcessing ? (
+													<div className="absolute inset-0 z-30 flex items-center justify-center gap-3 bg-background/70 backdrop-blur-sm">
+														<Loader2 className="h-5 w-5 animate-spin text-primary" />
+														<span className="text-sm font-medium text-foreground">
+															Restoring photo... credits apply after completion.
+														</span>
 													</div>
-												) : (
-													<div className="absolute left-4 top-4 z-20 rounded-full border border-white/30 bg-black/50 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
-														Original
-													</div>
-												)}
-											</div>
-
-											{selectedRestoredImage && (
-												<div
-													className="absolute inset-0 w-full select-none overflow-hidden"
-													style={{
-														clipPath: `polygon(${sliderPosition}% 0, 100% 0, 100% 100%, ${sliderPosition}% 100%)`,
-													}}
-												>
-													<img
-														src={selectedRestoredImage.url}
-														alt="Restored"
-														className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.01]"
-													/>
-													<div className="absolute right-4 top-4 z-20 flex items-center gap-2 rounded-full border border-white/30 bg-primary/80 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
-														<Sparkles className="size-3" /> AI Enhanced
-													</div>
-												</div>
-											)}
-
-											{selectedRestoredImage && (
-												<div
-													className="absolute inset-y-0 z-20 w-0.5 bg-white/70 transition-colors duration-300 group-hover:bg-white"
-													style={{ left: `${sliderPosition}%` }}
-												>
-													<div className="absolute inset-y-0 -left-10 w-20 cursor-ew-resize" />
-													<div className="absolute left-1/2 top-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-primary shadow-[0_15px_30px_rgba(0,0,0,0.25)] transition duration-300 group-hover:scale-105">
-														<Sparkles className="h-5 w-5" />
-													</div>
-													<div className="absolute inset-y-0 -left-[1px] w-[3px] bg-white shadow-[0_0_12px_rgba(255,255,255,0.7)]" />
-												</div>
-											)}
-
-											{selectedRestoredImage && (
-												<input
-													type="range"
-													min="0"
-													max="100"
-													value={sliderPosition}
-													onChange={handleSliderChange}
-													className="absolute inset-0 z-30 h-full w-full cursor-ew-resize opacity-0"
-													style={{ margin: 0 }}
-												/>
-											)}
-										</div>
+												) : null
+											}
+											position={sliderPosition}
+											onPositionChange={handleSliderChange}
+											isInteractive={Boolean(selectedRestoredImage)}
+											inputAriaLabel="Compare original and restored photo"
+										/>
 									</div>
 
 									<div className="flex items-center gap-3 text-xs text-muted-foreground">

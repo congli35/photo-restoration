@@ -214,33 +214,18 @@ export function PhotoRestoration() {
 					<div className="relative">
 						<div className="relative px-2 py-6 sm:px-4 md:px-6 md:py-8">
 							<div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_60%)]" />
-							<div className="relative flex flex-col gap-4">
-								<div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-									<div className="space-y-2">
-										<div className="flex items-center gap-3 text-xs uppercase tracking-[0.35em] text-muted-foreground">
-											<span className="size-2 rounded-full bg-primary" />
-											Photo Restoration
-										</div>
-										<h2 className="text-2xl font-semibold text-foreground md:text-4xl">
-											Upload, restore, and compare in one flow.
-										</h2>
-										<p className="max-w-2xl text-sm text-muted-foreground md:text-base">
-											Drop a photo, then review up to {restorationImageCount} restored
-											versions side by side.
-										</p>
-									</div>
-									<div className="flex flex-wrap gap-2 text-xs font-medium text-muted-foreground">
-										<div className="rounded-full border border-border/60 bg-muted/40 px-3 py-1.5">
-											01 Upload
-										</div>
-										<div className="rounded-full border border-border/60 bg-muted/40 px-3 py-1.5">
-											02 Restore
-										</div>
-										<div className="rounded-full border border-border/60 bg-muted/40 px-3 py-1.5">
-											03 Compare
-										</div>
-									</div>
+							<div className="relative flex flex-col items-center gap-3 text-center md:gap-4">
+								<div className="flex items-center justify-center gap-3 text-xs uppercase tracking-[0.35em] text-muted-foreground">
+									<span className="size-2 rounded-full bg-primary" />
+									Photo Restoration
 								</div>
+								<h2 className="text-2xl font-semibold text-foreground md:text-4xl">
+									Upload, restore, and compare in one flow.
+								</h2>
+								<p className="mx-auto max-w-2xl text-sm text-muted-foreground md:text-base">
+									Drop a photo, then review up to {restorationImageCount} restored
+									versions side by side.
+								</p>
 							</div>
 						</div>
 

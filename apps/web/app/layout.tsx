@@ -10,6 +10,14 @@ export const metadata: Metadata = {
 		default: config.appName,
 		template: `%s | ${config.appName}`,
 	},
+	icons: {
+		icon: [
+			{
+				url: "/images/icon.svg",
+				type: "image/svg+xml",
+			},
+		],
+	},
 };
 
 export default function RootLayout({ children }: PropsWithChildren) {

@@ -1,15 +1,22 @@
 import { ClientProviders } from "@shared/components/ClientProviders";
 import { ConsentProvider } from "@shared/components/ConsentProvider";
 import { cn } from "@ui/lib";
-import { Geist } from "next/font/google";
+import { Fraunces, IBM_Plex_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { PropsWithChildren } from "react";
 
-const sansFont = Geist({
+const bodyFont = IBM_Plex_Sans({
 	weight: ["400", "500", "600", "700"],
 	subsets: ["latin"],
-	variable: "--font-sans",
+	variable: "--font-body",
+	display: "swap",
+});
+
+const displayFont = Fraunces({
+	subsets: ["latin"],
+	variable: "--font-display",
+	display: "swap",
 });
 
 export async function Document({
@@ -23,7 +30,7 @@ export async function Document({
 		<html
 			lang={locale}
 			suppressHydrationWarning
-			className={sansFont.className}
+			className={cn(bodyFont.variable, displayFont.variable)}
 		>
 			<body
 				className={cn(

@@ -18,7 +18,10 @@ export function Logo({
 		>
 			<Image src={icon} alt="acme logo" className="size-10" />
 			{withLabel && (
-				<span className="ml-3 hidden text-lg md:block">
+				<span
+					className="ml-3 hidden text-lg font-bold leading-[1.05] tracking-[-0.02em] md:block"
+					style={{ fontFamily: "var(--font-display)" }}
+				>
 					PhotoRestore
 				</span>
 			)}

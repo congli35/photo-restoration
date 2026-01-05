@@ -47,7 +47,7 @@ export const config = {
 		// Whether billing should be enabled for users (above you can enable it for organizations instead)
 		enableBilling: true,
 		// Whether you want the user to go through an onboarding form after signup (can be defined in the OnboardingForm.tsx)
-		enableOnboarding: true,
+		enableOnboarding: false,
 	},
 	// Authentication
 	auth: {
@@ -138,10 +138,10 @@ export const config = {
 					{
 						type: "recurring",
 						// Yearly subscription (keeps backward compatibility with older env var name).
-						productId:
-							(process.env.NEXT_PUBLIC_PRICE_ID_PLUS_YEARLY ??
-								process.env
-									.NEXT_PUBLIC_PRICE_ID_PLUS_MONTHLY) as string,
+						productId: (process.env
+							.NEXT_PUBLIC_PRICE_ID_PLUS_YEARLY ??
+							process.env
+								.NEXT_PUBLIC_PRICE_ID_PLUS_MONTHLY) as string,
 						interval: "year",
 						amount: 69,
 						currency: "USD",
@@ -155,10 +155,10 @@ export const config = {
 					{
 						type: "recurring",
 						// Yearly subscription (keeps backward compatibility with older env var name).
-						productId:
-							(process.env.NEXT_PUBLIC_PRICE_ID_PRO_YEARLY ??
-								process.env
-									.NEXT_PUBLIC_PRICE_ID_PRO_MONTHLY) as string,
+						productId: (process.env
+							.NEXT_PUBLIC_PRICE_ID_PRO_YEARLY ??
+							process.env
+								.NEXT_PUBLIC_PRICE_ID_PRO_MONTHLY) as string,
 						interval: "year",
 						amount: 129,
 						currency: "USD",

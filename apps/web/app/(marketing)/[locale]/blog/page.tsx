@@ -1,6 +1,6 @@
 import { PostListItem } from "@marketing/blog/components/PostListItem";
 import { getAllPosts } from "@marketing/blog/utils/lib/posts";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 export async function generateMetadata() {
 	const t = await getTranslations();
@@ -9,8 +9,13 @@ export async function generateMetadata() {
 	};
 }
 
-export default async function BlogListPage() {
-	const locale = await getLocale();
+export default async function BlogListPage({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}) {
+	const { locale } = await params;
+	setRequestLocale(locale);
 	const t = await getTranslations();
 
 	const posts = await getAllPosts();

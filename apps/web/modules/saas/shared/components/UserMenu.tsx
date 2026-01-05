@@ -38,6 +38,7 @@ export function UserMenu({ showUserName }: { showUserName?: boolean }) {
 	const { user } = useSession();
 	const { setTheme: setCurrentTheme, theme: currentTheme } = useTheme();
 	const [theme, setTheme] = useState<string>(currentTheme ?? "system");
+	const documentationUrl = getDocumentationUrl();
 
 	const colorModeOptions = [
 		{
@@ -151,7 +152,7 @@ export function UserMenu({ showUserName }: { showUserName?: boolean }) {
 				</DropdownMenuItem>
 
 				<DropdownMenuItem asChild>
-					<a href="https://supastarter.dev/docs/nextjs">
+					<a href={documentationUrl} target="_blank" rel="noreferrer">
 						<BookIcon className="mr-2 size-4" />
 						{t("app.userMenu.documentation")}
 					</a>
@@ -171,4 +172,9 @@ export function UserMenu({ showUserName }: { showUserName?: boolean }) {
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);
+}
+
+function getDocumentationUrl() {
+	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+	return new URL("/docs", siteUrl).toString();
 }

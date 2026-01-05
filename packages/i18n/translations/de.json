@@ -497,6 +497,7 @@
 		"getStarted": "Jetzt loslegen",
 		"month": "Monat",
 		"monthly": "Monatlich",
+		"pricePerCreditIncluded": "Inklusive Credits: {price} / Credit",
 		"products": {
 			"basic": {
 				"description": "Perfekt für den Einstieg",
@@ -515,12 +516,22 @@
 				"title": "Enterprise"
 			},
 			"free": {
-				"description": "Kostenloser Start",
+				"description": "Einmal testen, danach jederzeit aufladen",
 				"features": {
-					"anotherFeature": "Ein weiteres erstaunliches Merkmal",
-					"limitedSupport": "Begrenzter Support"
+					"freeCredits": "{count} {count, plural, one {kostenloser Credit} other {kostenlose Credits}}",
+					"topUpAnytime": "Credits jederzeit nachkaufen"
 				},
 				"title": "Free"
+			},
+			"plus": {
+				"description": "Für gelegentliche Restaurierungen",
+				"features": {
+					"creditsPerYear": "{count} Credits / Jahr",
+					"myPhotosRetention7Days": "Meine Fotos: restaurierte Fotos 7 Tage speichern",
+					"standardQueue": "Standard-Verarbeitung",
+					"topUpAnytime": "Credits jederzeit nachkaufen"
+				},
+				"title": "Plus"
 			},
 			"lifetime": {
 				"description": "Einmal kaufen. Für immer verwenden.",
@@ -531,11 +542,13 @@
 				"title": "Lifetime"
 			},
 			"pro": {
-				"description": "Am besten für Teams",
+				"description": "Bester Wert für größere Batches",
 				"features": {
-					"anotherFeature": "Ein weiteres erstaunliches Merkmal",
 					"fiveMembers": "Bis zu 5 Mitglieder",
-					"fullSupport": "Voller Support"
+					"creditsPerYear": "{count} Credits / Jahr",
+					"myPhotosRetentionSubscription": "Meine Fotos: restaurierte Fotos während des Abos speichern",
+					"priorityQueue": "Prioritäts-Verarbeitung",
+					"topUpAnytime": "Credits jederzeit nachkaufen"
 				},
 				"title": "Pro"
 			}
@@ -544,6 +557,11 @@
 		"recommended": "Empfohlen",
 		"subscribe": "Abonnieren",
 		"title": "Preise",
+		"creditPacks": {
+			"price": "{price} / Credit",
+			"subtitle": "Jederzeit aufladen",
+			"title": "Credit-Pakete"
+		},
 		"trialPeriod": "{days} {days, plural, one {Tag} other {Tage}} kostenlose Testphase",
 		"year": "Jahr",
 		"yearly": "Jährlich",

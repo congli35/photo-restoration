@@ -3,8 +3,8 @@ import { ImageCompareSlider } from "@shared/components/ImageCompareSlider";
 import { Button } from "@ui/components/button";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
-import beforeImage from "../../../../public/images/before.png";
 import afterImage from "../../../../public/images/after.png";
+import beforeImage from "../../../../public/images/before.png";
 
 export function Hero() {
 	return (
@@ -22,19 +22,19 @@ export function Hero() {
 									New:
 								</span>
 								<span className="ml-1 block font-medium text-foreground">
-									Texture-aware scratch repair
+									Texture-aware photo restoration
 								</span>
 							</div>
 						</div>
 
-						<h1 className="mx-auto max-w-3xl text-balance font-bold text-5xl lg:mx-0 lg:max-w-xl lg:text-6xl xl:text-7xl">
-							Restore faded photos to gallery-ready clarity.
+						<h1 className="mx-auto max-w-3xl text-balance font-bold text-[clamp(2.6rem,4.2vw,3.8rem)] leading-[1.05] tracking-[-0.02em] lg:mx-0 lg:max-w-none lg:whitespace-nowrap">
+							Photo Restoration
 						</h1>
 
 						<p className="mx-auto mt-4 max-w-2xl text-balance text-foreground/60 text-lg lg:mx-0 lg:max-w-xl">
-							Repair scratches, revive color, and sharpen faces in
-							seconds. Slide to compare the original against the
-							restored image.
+							AI photo restoration repairs scratches, revives
+							color, and sharpens faces. Slide to compare the
+							original against the restored image.
 						</p>
 
 						<div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs uppercase tracking-[0.3em] text-foreground/50 lg:justify-start">
@@ -51,13 +51,13 @@ export function Hero() {
 						<div className="mt-6 flex flex-col items-center justify-center gap-3 md:flex-row lg:justify-start lg:items-start">
 							<Button size="lg" variant="primary" asChild>
 								<Link href="/auth/login">
-									Restore a photo
+									Start Photo Restoration
 									<ArrowRightIcon className="ml-2 size-4" />
 								</Link>
 							</Button>
 							<Button variant="light" size="lg" asChild>
 								<LocaleLink href="/docs">
-									See restoration guide
+									See Restoration Guide
 								</LocaleLink>
 							</Button>
 						</div>
@@ -109,6 +109,7 @@ export function Hero() {
 }
 
 const restorationHighlights = [
+	"Photo restoration",
 	"Scratch repair",
 	"Color revival",
 	"Face clarity",

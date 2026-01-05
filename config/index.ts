@@ -5,17 +5,13 @@ export const config = {
 	// Internationalization
 	i18n: {
 		// Whether internationalization should be enabled (if disabled, you still need to define the locale you want to use below and set it as the default locale)
-		enabled: true,
+		enabled: false,
 		// Define all locales here that should be available in the app
 		// You need to define a label that is shown in the language selector and a currency that should be used for pricing with this locale
 		locales: {
 			en: {
 				currency: "USD",
 				label: "English",
-			},
-			de: {
-				currency: "USD",
-				label: "Deutsch",
 			},
 		},
 		// The default locale is used if no locale is provided
@@ -77,7 +73,7 @@ export const config = {
 	// Mails
 	mails: {
 		// the from address for mails
-		from: "noreply@supastarter.dev",
+		from: "noreply@s99a048",
 	},
 	// Frontend
 	ui: {
@@ -102,8 +98,10 @@ export const config = {
 	storage: {
 		// define the name of the buckets for the different types of files
 		bucketNames: {
+			avatars: process.env.NEXT_PUBLIC_AVATARS_BUCKET_NAME ?? "avatars",
 			photoRestoration:
-				process.env.NEXT_PUBLIC_BUCKET_NAME ?? "photo-restoration",
+				process.env.NEXT_PUBLIC_PHOTO_RESTORATION_BUCKET_NAME ??
+				"photo-restoration",
 		},
 	},
 	contactForm: {
@@ -116,50 +114,56 @@ export const config = {
 	},
 	// Payments
 	payments: {
+		credits: {
+			prices: [
+				{
+					type: "one-time",
+					productId: process.env
+						.NEXT_PUBLIC_PRICE_ID_CREDITS_USD as string,
+					amount: 1.99,
+					currency: "USD",
+				},
+			],
+		},
 		// define the products that should be available in the checkout
 		plans: {
 			// The free plan is treated differently. It will automatically be assigned if the user has no other plan.
 			free: {
 				isFree: true,
+				credits: 1,
+			},
+			plus: {
+				credits: 40,
+				prices: [
+					{
+						type: "recurring",
+						// Yearly subscription (keeps backward compatibility with older env var name).
+						productId:
+							(process.env.NEXT_PUBLIC_PRICE_ID_PLUS_YEARLY ??
+								process.env
+									.NEXT_PUBLIC_PRICE_ID_PLUS_MONTHLY) as string,
+						interval: "year",
+						amount: 69,
+						currency: "USD",
+					},
+				],
 			},
 			pro: {
 				recommended: true,
+				credits: 160,
 				prices: [
 					{
 						type: "recurring",
-						productId: process.env
-							.NEXT_PUBLIC_PRICE_ID_PRO_MONTHLY as string,
-						interval: "month",
-						amount: 29,
-						currency: "USD",
-						seatBased: true,
-						trialPeriodDays: 7,
-					},
-					{
-						type: "recurring",
-						productId: process.env
-							.NEXT_PUBLIC_PRICE_ID_PRO_YEARLY as string,
+						// Yearly subscription (keeps backward compatibility with older env var name).
+						productId:
+							(process.env.NEXT_PUBLIC_PRICE_ID_PRO_YEARLY ??
+								process.env
+									.NEXT_PUBLIC_PRICE_ID_PRO_MONTHLY) as string,
 						interval: "year",
-						amount: 290,
-						currency: "USD",
-						seatBased: true,
-						trialPeriodDays: 7,
-					},
-				],
-			},
-			lifetime: {
-				prices: [
-					{
-						type: "one-time",
-						productId: process.env
-							.NEXT_PUBLIC_PRICE_ID_LIFETIME as string,
-						amount: 799,
+						amount: 129,
 						currency: "USD",
 					},
 				],
-			},
-			enterprise: {
-				isEnterprise: true,
 			},
 		},
 	},

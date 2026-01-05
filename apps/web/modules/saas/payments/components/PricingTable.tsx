@@ -38,7 +38,7 @@ export function PricingTable({
 	const router = useRouter();
 	const localeCurrency = useLocaleCurrency();
 	const [loading, setLoading] = useState<PlanId | false>(false);
-	const [interval, setInterval] = useState<"month" | "year">("month");
+	const [interval, setInterval] = useState<"month" | "year">("year");
 
 	const { planData } = usePlanData();
 
@@ -89,10 +89,34 @@ export function PricingTable({
 	const hasSubscriptions = filteredPlans.some(([_, plan]) =>
 		plan.prices?.some((price) => price.type === "recurring"),
 	);
+	const hasMonthlySubscriptions = filteredPlans.some(([_, plan]) =>
+		plan.prices?.some(
+			(price) =>
+				price.type === "recurring" &&
+				!price.hidden &&
+				price.interval === "month" &&
+				price.currency === localeCurrency,
+		),
+	);
+	const hasYearlySubscriptions = filteredPlans.some(([_, plan]) =>
+		plan.prices?.some(
+			(price) =>
+				price.type === "recurring" &&
+				!price.hidden &&
+				price.interval === "year" &&
+				price.currency === localeCurrency,
+		),
+	);
+	const showIntervalTabs = hasMonthlySubscriptions && hasYearlySubscriptions;
+	const effectiveInterval = showIntervalTabs
+		? interval
+		: hasYearlySubscriptions
+			? "year"
+			: "month";
 
 	return (
 		<div className={cn("@container", className)}>
-			{hasSubscriptions && (
+			{hasSubscriptions && showIntervalTabs && (
 				<div className="mb-6 flex @xl:justify-center">
 					<Tabs
 						value={interval}
@@ -131,15 +155,45 @@ export function PricingTable({
 							(price) =>
 								!price.hidden &&
 								(price.type === "one-time" ||
-									price.interval === interval) &&
+									price.interval === effectiveInterval) &&
 								price.currency === localeCurrency,
 						);
+
+						const pricePerCredit =
+							!isFree &&
+							!!plan.credits &&
+							!!price &&
+							price.amount > 0 &&
+							(!("seatBased" in price) || !price.seatBased)
+								? price.amount / plan.credits
+								: null;
+						const pricePerCreditFeature =
+							pricePerCredit && price
+								? t("pricing.pricePerCreditIncluded", {
+										price: format.number(pricePerCredit, {
+											style: "currency",
+											currency:
+												price.currency ?? localeCurrency,
+											maximumFractionDigits: 2,
+										}),
+									})
+								: null;
+						const displayedFeatures =
+							!isFree &&
+							!!pricePerCreditFeature &&
+							!!features?.length
+								? [
+										features[0],
+										pricePerCreditFeature,
+										...features.slice(1),
+									]
+								: features;
 
 						if (isFree) {
 							price = {
 								amount: 0,
 								currency: localeCurrency,
-								interval,
+								interval: effectiveInterval,
 								productId: "",
 								type: "recurring",
 							};
@@ -184,9 +238,9 @@ export function PricingTable({
 											</div>
 										)}
 
-										{!!features?.length && (
+										{!!displayedFeatures?.length && (
 											<ul className="mt-4 grid list-none gap-2 text-sm">
-												{features.map(
+												{displayedFeatures.map(
 													(feature, key) => (
 														<li
 															key={key}
@@ -215,11 +269,11 @@ export function PricingTable({
 									</div>
 
 									<div>
-										{price && (
-											<strong
-												className="block font-medium text-2xl lg:text-3xl"
-												data-test="price-table-plan-price"
-											>
+											{price && (
+												<strong
+													className="block font-medium text-2xl lg:text-3xl"
+													data-test="price-table-plan-price"
+												>
 												{format.number(price.amount, {
 													style: "currency",
 													currency: price.currency,
@@ -227,7 +281,8 @@ export function PricingTable({
 												{"interval" in price && (
 													<span className="font-normal text-xs opacity-60">
 														{" / "}
-														{interval === "month"
+														{effectiveInterval ===
+														"month"
 															? t(
 																	"pricing.month",
 																	{
@@ -256,13 +311,13 @@ export function PricingTable({
 															)}
 														</span>
 													)}
-											</strong>
-										)}
+												</strong>
+											)}
 
-										{isEnterprise ? (
-											<Button
-												className="mt-4 w-full"
-												variant="light"
+											{isEnterprise ? (
+												<Button
+													className="mt-4 w-full"
+													variant="light"
 												asChild
 											>
 												<LocaleLink href="/contact">

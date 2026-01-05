@@ -6,20 +6,28 @@ export function FaqSection({ className }: { className?: string }) {
 
 	const items = [
 		{
-			question: "What is the refund policy?",
-			answer: "We offer a 30-day money-back guarantee if you're not happy with our product.",
+			question: "What is photo restoration?",
+			answer: "Photo restoration repairs scratches, fading, and color loss to bring old photos back to life.",
 		},
 		{
-			question: "How do I cancel my subscription?",
-			answer: "You can cancel your subscription by visiting the billing page.",
+			question: "Can photo restoration fix scratches and damage?",
+			answer: "Yes. Our photo restoration removes scratches, dust, and minor damage while preserving textures.",
 		},
 		{
-			question: "Can I change my plan?",
-			answer: "Yes, you can change your plan at any time by visiting the billing page.",
+			question: "How long does photo restoration take?",
+			answer: "Most photo restoration jobs finish in seconds, depending on file size and detail.",
 		},
 		{
-			question: "Do you offer a free trial?",
-			answer: "Yes, we offer a 14-day free trial.",
+			question: "Does photo restoration work on black-and-white photos?",
+			answer: "Absolutely. Photo restoration cleans damage on black-and-white photos and can restore color if you want it.",
+		},
+		{
+			question: "Is my photo safe during photo restoration?",
+			answer: "Your originals stay private, and you can download both the original and the restored photo.",
+		},
+		{
+			question: "What files are best for photo restoration?",
+			answer: "High-resolution scans in common formats like JPG or PNG produce the sharpest photo restoration results.",
 		},
 	];
 

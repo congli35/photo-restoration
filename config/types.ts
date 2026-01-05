@@ -36,6 +36,7 @@ export type Config = {
 	storage: {
 		bucketNames: {
 			avatars: string;
+			photoRestoration: string;
 		};
 	};
 	ui: {
@@ -55,12 +56,38 @@ export type Config = {
 		subject: string;
 	};
 	payments: {
+		credits: {
+			prices: Array<
+				{
+					productId: string;
+					amount: number;
+					currency: string;
+					hidden?: boolean;
+				} & (
+					| {
+							type: "recurring";
+							interval: "month" | "year" | "week";
+							intervalCount?: number;
+							trialPeriodDays?: number;
+							seatBased?: boolean;
+					  }
+					| {
+							type: "one-time";
+					  }
+				)
+			>;
+		};
 		plans: {
 			[id: string]: {
 				hidden?: boolean;
 				isFree?: boolean;
 				isEnterprise?: boolean;
 				recommended?: boolean;
+				/**
+				 * Credits granted per billing interval (e.g. per year for yearly plans).
+				 * For the free plan, this can be used as the initial trial credit grant.
+				 */
+				credits?: number;
 				prices?: Array<
 					{
 						productId: string;

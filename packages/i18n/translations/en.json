@@ -500,6 +500,7 @@
 		"getStarted": "Get started",
 		"month": "{count, plural, one {month} other {{count} months}}",
 		"monthly": "Monthly",
+		"pricePerCreditIncluded": "Included credits: {price} / credit",
 		"products": {
 			"basic": {
 				"description": "Perfect to small teams.",
@@ -518,12 +519,22 @@
 				"title": "Enterprise"
 			},
 			"free": {
-				"description": "Start for free",
+				"description": "Try it once, then top up anytime",
 				"features": {
-					"anotherFeature": "Another amazing feature",
-					"limitedSupport": "Limited support"
+					"freeCredits": "{count} {count, plural, one {free credit} other {free credits}}",
+					"topUpAnytime": "Buy credit packs anytime"
 				},
 				"title": "Free"
+			},
+			"plus": {
+				"description": "For occasional restorations",
+				"features": {
+					"creditsPerYear": "{count} credits / year",
+					"myPhotosRetention7Days": "Keep restored photos for 7 days",
+					"standardQueue": "Standard processing",
+					"topUpAnytime": "Buy credit packs anytime"
+				},
+				"title": "Plus"
 			},
 			"lifetime": {
 				"description": "Buy once. Use forever.",
@@ -534,11 +545,13 @@
 				"title": "Lifetime"
 			},
 			"pro": {
-				"description": "Best for teams",
+				"description": "Best value for bigger batches",
 				"features": {
-					"anotherFeature": "Another amazing feature",
 					"fiveMembers": "Up to 5 members",
-					"fullSupport": "Full support"
+					"creditsPerYear": "{count} credits / year",
+					"myPhotosRetentionSubscription": "Keep restored photos while subscribed",
+					"priorityQueue": "Priority processing",
+					"topUpAnytime": "Buy credit packs anytime"
 				},
 				"title": "Pro"
 			}
@@ -547,6 +560,11 @@
 		"recommended": "Recommended",
 		"subscribe": "Subscribe",
 		"title": "Pricing",
+		"creditPacks": {
+			"price": "{price} / credit",
+			"subtitle": "Top up anytime",
+			"title": "Credit packs"
+		},
 		"trialPeriod": "{days} {days, plural, one {day} other {days}} free trial",
 		"year": "{count, plural, one {year} other {{count} years}}",
 		"yearly": "Yearly",

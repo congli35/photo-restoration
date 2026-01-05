@@ -14,20 +14,28 @@ export function FaqSection({ className }: { className?: string }) {
 			answer: "Yes. Our photo restoration removes scratches, dust, and minor damage while preserving textures.",
 		},
 		{
+			question: "Do I get multiple results to choose from?",
+			answer: "Yes. Every photo restoration generates three versions so you can compare results and choose the best one.",
+		},
+		{
 			question: "How long does photo restoration take?",
-			answer: "Most photo restoration jobs finish in seconds, depending on file size and detail.",
+			answer: "Most photo restoration jobs finish in seconds, but timing depends on your subscription plan priority and current server load.",
 		},
 		{
 			question: "Does photo restoration work on black-and-white photos?",
 			answer: "Absolutely. Photo restoration cleans damage on black-and-white photos and can restore color if you want it.",
 		},
 		{
-			question: "Is my photo safe during photo restoration?",
-			answer: "Your originals stay private, and you can download both the original and the restored photo.",
+			question: "What is the photo retention policy?",
+			answer: "We keep your photo restoration history so you can revisit results in My Photos, and you can delete any item there at any time.",
 		},
 		{
-			question: "What files are best for photo restoration?",
-			answer: "High-resolution scans in common formats like JPG or PNG produce the sharpest photo restoration results.",
+			question: "What input formats are supported for photo restoration?",
+			answer: "Photo restoration supports common image formats like JPG and PNG, and the default restored output format is PNG.",
+		},
+		{
+			question: "What resolutions are supported for photo restoration?",
+			answer: "Photo restoration results are available in 1K, 2K, and 4K resolutions, depending on your plan and source image quality.",
 		},
 	];
 

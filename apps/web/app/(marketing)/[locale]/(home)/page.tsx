@@ -2,8 +2,8 @@ import { FaqSection } from "@marketing/home/components/FaqSection";
 import { Hero } from "@marketing/home/components/Hero";
 import { PricingSection } from "@marketing/home/components/PricingSection";
 import { getBaseUrl } from "@repo/utils";
-import { setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 
 export async function generateMetadata(props: {
 	params: Promise<{ locale: string }>;
@@ -34,15 +34,13 @@ export async function generateMetadata(props: {
 			description,
 			type: "website",
 			url: new URL(`/${locale}`, baseUrl).toString(),
-			images: [
-				new URL("/images/restore-image.png", baseUrl).toString(),
-			],
+			images: [new URL("/images/og.png", baseUrl).toString()],
 		},
 		twitter: {
 			card: "summary_large_image",
 			title,
 			description,
-			images: [new URL("/images/restore-image.png", baseUrl).toString()],
+			images: [new URL("/images/og.png", baseUrl).toString()],
 		},
 	};
 }

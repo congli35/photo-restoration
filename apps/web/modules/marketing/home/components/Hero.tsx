@@ -15,18 +15,6 @@ export function Hero() {
 			<div className="container relative z-20 pt-28 pb-12 lg:pt-36 lg:pb-16">
 				<div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
 					<div className="text-center lg:text-left">
-						<div className="mb-4 flex justify-center lg:justify-start">
-							<div className="mx-auto flex flex-wrap items-center justify-center rounded-full border border-highlight/30 p-px px-4 py-1 font-normal text-highlight text-sm lg:mx-0">
-								<span className="flex items-center gap-2 rounded-full font-semibold text-highlight">
-									<span className="size-2 rounded-full bg-highlight" />
-									New:
-								</span>
-								<span className="ml-1 block font-medium text-foreground">
-									Texture-aware photo restoration
-								</span>
-							</div>
-						</div>
-
 						<h1 className="mx-auto max-w-3xl text-balance font-bold text-[clamp(2.6rem,4.2vw,3.8rem)] leading-[1.05] tracking-[-0.02em] lg:mx-0 lg:max-w-none lg:whitespace-nowrap">
 							Photo Restoration
 						</h1>

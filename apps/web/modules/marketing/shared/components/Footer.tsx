@@ -14,17 +14,17 @@ export function Footer() {
 				</div>
 
 				<div className="flex flex-col gap-2">
-					<LocaleLink href="/blog" className="block">
-						Blog
-					</LocaleLink>
-
 					<a href="#features" className="block">
-						Features
+						FAQ
 					</a>
 
 					<a href="/#pricing" className="block">
 						Pricing
 					</a>
+
+					<LocaleLink href="/docs" className="block">
+						Docs
+					</LocaleLink>
 				</div>
 
 				<div className="flex flex-col gap-2">

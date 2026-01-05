@@ -22,6 +22,7 @@ export function usePlanData() {
 				t("pricing.products.free.features.freeCredits", {
 					count: config.payments.plans.free.credits ?? 0,
 				}),
+				t("pricing.products.free.features.myPhotosRetention1Days"),
 				t("pricing.products.free.features.topUpAnytime"),
 			],
 		},
@@ -44,7 +45,9 @@ export function usePlanData() {
 				t("pricing.products.pro.features.creditsPerYear", {
 					count: config.payments.plans.pro.credits ?? 0,
 				}),
-				t("pricing.products.pro.features.myPhotosRetentionSubscription"),
+				t(
+					"pricing.products.pro.features.myPhotosRetentionSubscription",
+				),
 				t("pricing.products.pro.features.priorityQueue"),
 				t("pricing.products.pro.features.topUpAnytime"),
 			],

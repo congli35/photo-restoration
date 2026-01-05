@@ -522,6 +522,7 @@
 				"description": "Try it once, then top up anytime",
 				"features": {
 					"freeCredits": "{count} {count, plural, one {free credit} other {free credits}}",
+					"myPhotosRetention1Days": "Keep restored photos for 1 day",
 					"topUpAnytime": "Buy credit packs anytime"
 				},
 				"title": "Free"

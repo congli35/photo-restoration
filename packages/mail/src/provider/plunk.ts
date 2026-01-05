@@ -11,7 +11,7 @@ export const send: SendEmailHandler = async ({ to, subject, html, text }) => {
 		body: JSON.stringify({
 			to,
 			subject,
-			body: html,
+			body: html || text,
 			text,
 		}),
 	});

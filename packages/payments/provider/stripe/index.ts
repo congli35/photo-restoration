@@ -1,12 +1,15 @@
 import {
 	createPurchase,
+	db,
 	deletePurchaseBySubscriptionId,
 	getPurchaseBySubscriptionId,
 	updatePurchase,
 } from "@repo/database";
+import type { Prisma } from "@repo/database/prisma/generated/client";
 import { logger } from "@repo/logs";
 import Stripe from "stripe";
 import { setCustomerIdToEntity } from "../../src/lib/customer";
+import { getPlanCreditsByProductId } from "../../src/lib/plan-credits";
 import type {
 	CancelSubscription,
 	CreateCheckoutLink,
@@ -31,6 +34,70 @@ export function getStripeClient() {
 	stripeClient = new Stripe(stripeSecretKey);
 
 	return stripeClient;
+}
+
+interface GrantCreditsParams {
+	userId: string;
+	amount: number;
+	reason: string;
+	relatedEntityId: string;
+	relatedEntityType: string;
+	metadata?: Prisma.InputJsonValue;
+}
+
+async function grantCreditsIfNeeded({
+	userId,
+	amount,
+	reason,
+	relatedEntityId,
+	relatedEntityType,
+	metadata,
+}: GrantCreditsParams) {
+	if (amount <= 0) {
+		return;
+	}
+
+	await db.$transaction(async (tx) => {
+		const existing = await tx.creditTransaction.findFirst({
+			where: {
+				userId,
+				relatedEntityId,
+				relatedEntityType,
+			},
+		});
+
+		if (existing) {
+			return;
+		}
+
+		await tx.creditBalance.upsert({
+			where: { userId },
+			create: { userId, balance: 0 },
+			update: {},
+		});
+
+		const updatedBalance = await tx.creditBalance.update({
+			where: { userId },
+			data: {
+				balance: {
+					increment: amount,
+				},
+			},
+		});
+
+		await tx.creditTransaction.create({
+			data: {
+				userId,
+				type: "TOPUP",
+				amount,
+				balanceAfter: updatedBalance.balance,
+				reason,
+				relatedEntityId,
+				relatedEntityType,
+				...(metadata ? { metadata } : {}),
+			},
+		});
+	});
 }
 
 export const createCheckoutLink: CreateCheckoutLink = async (options) => {
@@ -186,9 +253,11 @@ export const webhookHandler: WebhookHandler = async (req) => {
 				break;
 			}
 			case "customer.subscription.created": {
-				const { metadata, customer, items, id } = event.data.object;
+				const { metadata, customer, items, id, status } =
+					event.data.object;
 
 				const productId = items?.data[0].price?.id;
+				const userId = metadata?.user_id;
 
 				if (!productId) {
 					return new Response("Missing product ID.", {
@@ -211,19 +280,101 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					userId: metadata?.user_id,
 				});
 
+				if (status !== "active" && status !== "trialing") {
+					logger.warn("Subscription not active for credits", {
+						status,
+						subscriptionId: id,
+					});
+					break;
+				}
+
+				if (!userId) {
+					logger.warn("Missing user id for subscription credits", {
+						subscriptionId: id,
+					});
+					break;
+				}
+
+				const planMatch = getPlanCreditsByProductId(productId);
+
+				if (!planMatch) {
+					logger.warn("No plan matched subscription product", {
+						productId,
+						subscriptionId: id,
+					});
+					break;
+				}
+
+				await grantCreditsIfNeeded({
+					userId,
+					amount: planMatch.credits,
+					reason: "Subscription credits",
+					relatedEntityId: id,
+					relatedEntityType: "SUBSCRIPTION_CREATE",
+					metadata: {
+						planId: planMatch.planId,
+						productId,
+						stripeEventId: event.id,
+					},
+				});
+
 				break;
 			}
 			case "customer.subscription.updated": {
 				const subscriptionId = event.data.object.id;
+				const userId = event.data.object.metadata?.user_id;
+				const productId = event.data.object.items?.data[0].price?.id;
+				const status = event.data.object.status;
+				const currentPeriodStart =
+					event.data.object.items?.data[0]?.current_period_start ??
+					null;
+				const previousPeriodStart =
+					event.data.previous_attributes?.items?.data?.[0]
+						?.current_period_start ?? null;
+				const isNewPeriod =
+					typeof previousPeriodStart === "number" &&
+					typeof currentPeriodStart === "number" &&
+					currentPeriodStart !== previousPeriodStart;
 
 				const existingPurchase =
 					await getPurchaseBySubscriptionId(subscriptionId);
 
 				if (existingPurchase) {
+					// Handle subscription renewal credits
+					if (isNewPeriod && userId && status === "active") {
+						const planMatch = getPlanCreditsByProductId(
+							productId ?? "",
+						);
+
+						if (!planMatch) {
+							logger.warn("No plan matched renewal product", {
+								productId,
+								subscriptionId,
+							});
+						} else {
+							const renewalEntityId = `${subscriptionId}:${currentPeriodStart}`;
+
+							await grantCreditsIfNeeded({
+								userId,
+								amount: planMatch.credits,
+								reason: "Subscription renewal credits",
+								relatedEntityId: renewalEntityId,
+								relatedEntityType: "SUBSCRIPTION_CYCLE",
+								metadata: {
+									planId: planMatch.planId,
+									productId,
+									subscriptionId,
+									currentPeriodStart,
+									stripeEventId: event.id,
+								},
+							});
+						}
+					}
+
 					await updatePurchase({
 						id: existingPurchase.id,
-						status: event.data.object.status,
-						productId: event.data.object.items?.data[0].price?.id,
+						status,
+						productId: productId ?? existingPurchase.productId,
 					});
 				}
 

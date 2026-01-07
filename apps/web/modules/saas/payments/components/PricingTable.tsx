@@ -8,12 +8,21 @@ import { useRouter } from "@shared/hooks/router";
 import { orpc } from "@shared/lib/orpc-query-utils";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@ui/components/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@ui/components/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@ui/components/tabs";
 import { cn } from "@ui/lib";
 import {
 	ArrowRightIcon,
 	BadgePercentIcon,
 	CheckIcon,
+	CreditCardIcon,
 	PhoneIcon,
 	StarIcon,
 } from "lucide-react";
@@ -39,6 +48,7 @@ export function PricingTable({
 	const localeCurrency = useLocaleCurrency();
 	const [loading, setLoading] = useState<PlanId | false>(false);
 	const [interval, setInterval] = useState<"month" | "year">("year");
+	const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
 	const { planData } = usePlanData();
 
@@ -46,16 +56,18 @@ export function PricingTable({
 		orpc.payments.createCheckoutLink.mutationOptions(),
 	);
 
-	const onSelectPlan = async (planId: PlanId, productId?: string) => {
+	const handleUpgradeClick = () => {
+		setUpgradeDialogOpen(true);
+	};
+
+	const onSelectPlan = async (
+		planId: PlanId,
+		price?: { productId: string; type: "recurring" | "one-time" },
+	) => {
 		if (!(userId || organizationId)) {
 			router.push("/auth/signup");
 			return;
 		}
-
-		const plan = plans[planId];
-		const price = plan.prices?.find(
-			(price) => price.productId === productId,
-		);
 
 		if (!price) {
 			return;
@@ -116,6 +128,52 @@ export function PricingTable({
 
 	return (
 		<div className={cn("@container", className)}>
+			<Dialog
+				open={upgradeDialogOpen}
+				onOpenChange={setUpgradeDialogOpen}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							{t("pricing.upgradePlan.title")}
+						</DialogTitle>
+						<DialogDescription>
+							{t("pricing.upgradePlan.description")}
+						</DialogDescription>
+					</DialogHeader>
+					<div className="grid gap-3">
+						<Button
+							variant="primary"
+							className="w-full justify-start"
+							asChild
+						>
+							<LocaleLink href="/app/my-credits">
+								<CreditCardIcon className="mr-2 size-4" />
+								{t("pricing.upgradePlan.buyCredits")}
+							</LocaleLink>
+						</Button>
+						<Button
+							variant="secondary"
+							className="w-full justify-start"
+							asChild
+						>
+							<LocaleLink href="/contact">
+								<PhoneIcon className="mr-2 size-4" />
+								{t("pricing.upgradePlan.contactUs")}
+							</LocaleLink>
+						</Button>
+					</div>
+					<DialogFooter>
+						<Button
+							type="button"
+							variant="light"
+							onClick={() => setUpgradeDialogOpen(false)}
+						>
+							{t("common.confirmation.cancel")}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 			{hasSubscriptions && showIntervalTabs && (
 				<div className="mb-6 flex @xl:justify-center">
 					<Tabs
@@ -173,7 +231,8 @@ export function PricingTable({
 										price: format.number(pricePerCredit, {
 											style: "currency",
 											currency:
-												price.currency ?? localeCurrency,
+												price.currency ??
+												localeCurrency,
 											maximumFractionDigits: 2,
 										}),
 									})
@@ -202,6 +261,9 @@ export function PricingTable({
 						if (!(price || isEnterprise)) {
 							return null;
 						}
+
+						const isUpgrade =
+							!!activePlanId && price?.type === "recurring";
 
 						return (
 							<div
@@ -269,11 +331,11 @@ export function PricingTable({
 									</div>
 
 									<div>
-											{price && (
-												<strong
-													className="block font-medium text-2xl lg:text-3xl"
-													data-test="price-table-plan-price"
-												>
+										{price && (
+											<strong
+												className="block font-medium text-2xl lg:text-3xl"
+												data-test="price-table-plan-price"
+											>
 												{format.number(price.amount, {
 													style: "currency",
 													currency: price.currency,
@@ -311,19 +373,32 @@ export function PricingTable({
 															)}
 														</span>
 													)}
-												</strong>
-											)}
+											</strong>
+										)}
 
-											{isEnterprise ? (
-												<Button
-													className="mt-4 w-full"
-													variant="light"
+										{isEnterprise ? (
+											<Button
+												className="mt-4 w-full"
+												variant="light"
 												asChild
 											>
 												<LocaleLink href="/contact">
 													<PhoneIcon className="mr-2 size-4" />
 													{t("pricing.contactSales")}
 												</LocaleLink>
+											</Button>
+										) : isUpgrade ? (
+											<Button
+												className="mt-4 w-full"
+												variant={
+													recommended
+														? "primary"
+														: "secondary"
+												}
+												onClick={handleUpgradeClick}
+											>
+												{t("pricing.choosePlan")}
+												<ArrowRightIcon className="ml-2 size-4" />
 											</Button>
 										) : (
 											<Button
@@ -336,7 +411,13 @@ export function PricingTable({
 												onClick={() =>
 													onSelectPlan(
 														planId as PlanId,
-														price?.productId,
+														price
+															? {
+																	productId:
+																		price.productId,
+																	type: price.type,
+																}
+															: undefined,
 													)
 												}
 												loading={loading === planId}

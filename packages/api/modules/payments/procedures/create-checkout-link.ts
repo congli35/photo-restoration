@@ -1,6 +1,10 @@
 import { ORPCError } from "@orpc/client";
 import { type Config, config } from "@repo/config";
-import { getOrganizationById } from "@repo/database";
+import {
+	getOrganizationById,
+	getPurchasesByOrganizationId,
+	getPurchasesByUserId,
+} from "@repo/database";
 import { logger } from "@repo/logs";
 import {
 	createCheckoutLink as createCheckoutLinkFn,
@@ -33,6 +37,21 @@ export const createCheckoutLink = protectedProcedure
 			input: { productId, redirectUrl, type, organizationId },
 			context: { user },
 		}) => {
+			if (type === "subscription") {
+				const purchases = organizationId
+					? await getPurchasesByOrganizationId(organizationId)
+					: await getPurchasesByUserId(user.id);
+				const hasSubscription = purchases.some(
+					(purchase) => purchase.type === "SUBSCRIPTION",
+				);
+
+				if (hasSubscription) {
+					throw new ORPCError("BAD_REQUEST", {
+						message: "Subscription already exists",
+					});
+				}
+			}
+
 			const customerId = await getCustomerIdFromEntity(
 				organizationId
 					? {

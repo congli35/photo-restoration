@@ -1,7 +1,8 @@
 "use client";
 
+import { config } from "@repo/config";
 import { orpc } from "@shared/lib/orpc-query-utils";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@ui/components/button";
 import {
 	Dialog,
@@ -14,7 +15,7 @@ import {
 import { Input } from "@ui/components/input";
 import { Label } from "@ui/components/label";
 import { cn } from "@ui/lib";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -23,20 +24,38 @@ export function CreditTopupDialog({
 	onOpenChange,
 }: CreditTopupDialogProps) {
 	const t = useTranslations();
-	const queryClient = useQueryClient();
+	const format = useFormatter();
 	const [amount, setAmount] = useState<number>(10);
 
-	const topupMutation = useMutation(orpc.credits.topup.mutationOptions());
+	const createCheckoutLinkMutation = useMutation(
+		orpc.payments.createCheckoutLink.mutationOptions(),
+	);
+
+	// Get credit price from config
+	const creditPrice = config.payments.credits.prices[0];
+	const pricePerCredit = creditPrice?.amount ?? 1.99;
+	const currency = creditPrice?.currency ?? "USD";
+	const totalCost = amount * pricePerCredit;
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
+		if (!creditPrice?.productId) {
+			toast.error("Credit purchase is not configured");
+			return;
+		}
+
 		try {
-			await topupMutation.mutateAsync({ amount });
-			toast.success(t("credits.topup.notifications.success", { amount }));
-			queryClient.invalidateQueries({ queryKey: ["credits"] });
-			onOpenChange(false);
-			setAmount(10);
+			const { checkoutLink } =
+				await createCheckoutLinkMutation.mutateAsync({
+					type: "one-time",
+					productId: creditPrice.productId,
+					quantity: amount,
+					redirectUrl: `${window.location.origin}/app/my-credits`,
+				});
+
+			// Redirect to Stripe checkout
+			window.location.href = checkoutLink;
 		} catch {
 			toast.error(t("credits.topup.notifications.error"));
 		}
@@ -44,7 +63,7 @@ export function CreditTopupDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="relative overflow-hidden border-border/70 bg-[linear-gradient(160deg,rgba(78,109,245,0.08)_0%,rgba(255,255,255,0)_60%)]">
+			<DialogContent className="overflow-hidden border-border/70 bg-[linear-gradient(160deg,rgba(78,109,245,0.08)_0%,rgba(255,255,255,0)_60%)]">
 				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(700px_circle_at_-10%_-20%,rgba(78,109,245,0.18),transparent_60%)]" />
 				<DialogHeader className="relative">
 					<DialogTitle className="text-2xl">
@@ -82,7 +101,7 @@ export function CreditTopupDialog({
 						</div>
 						<div className="grid gap-2">
 							<div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-								{t("credits.topup.amount")}
+								Quick Select
 							</div>
 							<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
 								{presetAmounts.map((preset) => (
@@ -103,6 +122,28 @@ export function CreditTopupDialog({
 								))}
 							</div>
 						</div>
+						<div className="rounded-xl border border-border/70 bg-muted/30 p-4">
+							<div className="flex items-center justify-between">
+								<div className="text-sm text-muted-foreground">
+									Price per credit
+								</div>
+								<div className="font-semibold">
+									{format.number(pricePerCredit, {
+										style: "currency",
+										currency,
+									})}
+								</div>
+							</div>
+							<div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
+								<div className="font-semibold">Total</div>
+								<div className="font-bold text-2xl text-primary">
+									{format.number(totalCost, {
+										style: "currency",
+										currency,
+									})}
+								</div>
+							</div>
+						</div>
 					</div>
 					<DialogFooter>
 						<Button
@@ -114,7 +155,7 @@ export function CreditTopupDialog({
 						</Button>
 						<Button
 							type="submit"
-							loading={topupMutation.isPending}
+							loading={createCheckoutLinkMutation.isPending}
 							disabled={amount <= 0}
 						>
 							{t("credits.topup.submit")}

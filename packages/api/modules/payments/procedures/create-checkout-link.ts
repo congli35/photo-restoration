@@ -30,11 +30,12 @@ export const createCheckoutLink = protectedProcedure
 			productId: z.string(),
 			redirectUrl: z.string().optional(),
 			organizationId: z.string().optional(),
+			quantity: z.number().int().positive().optional(),
 		}),
 	)
 	.handler(
 		async ({
-			input: { productId, redirectUrl, type, organizationId },
+			input: { productId, redirectUrl, type, organizationId, quantity },
 			context: { user },
 		}) => {
 			if (type === "subscription") {
@@ -100,6 +101,7 @@ export const createCheckoutLink = protectedProcedure
 						: { userId: user.id }),
 					trialPeriodDays,
 					seats,
+					quantity,
 					customerId: customerId ?? undefined,
 				});
 

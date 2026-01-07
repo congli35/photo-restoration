@@ -9,6 +9,7 @@ export type CreateCheckoutLink = (params: {
 	userId?: string;
 	trialPeriodDays?: number;
 	seats?: number;
+	quantity?: number;
 }) => Promise<string | null>;
 
 export type CreateCustomerPortalLink = (params: {

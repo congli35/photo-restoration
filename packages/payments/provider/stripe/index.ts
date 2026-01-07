@@ -111,6 +111,7 @@ export const createCheckoutLink: CreateCheckoutLink = async (options) => {
 		userId,
 		trialPeriodDays,
 		seats,
+		quantity,
 		email,
 	} = options;
 
@@ -124,7 +125,7 @@ export const createCheckoutLink: CreateCheckoutLink = async (options) => {
 		success_url: redirectUrl ?? "",
 		line_items: [
 			{
-				quantity: seats ?? 1,
+				quantity: quantity ?? seats ?? 1,
 				price: productId,
 			},
 		],
@@ -134,7 +135,8 @@ export const createCheckoutLink: CreateCheckoutLink = async (options) => {
 					payment_intent_data: {
 						metadata,
 					},
-					customer_creation: "always",
+					// Only set customer_creation if no customerId is provided
+					...(customerId ? {} : { customer_creation: "always" }),
 				}
 			: {
 					subscription_data: {
@@ -230,6 +232,8 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					});
 
 				const productId = checkoutSession.line_items?.data[0].price?.id;
+				const quantity = checkoutSession.line_items?.data[0].quantity ?? 1;
+				const userId = metadata?.user_id;
 
 				if (!productId) {
 					return new Response("Missing product ID.", {
@@ -249,6 +253,22 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					organizationId: metadata?.organization_id,
 					userId: metadata?.user_id,
 				});
+
+				// Grant credits for one-time credit purchases
+				if (userId) {
+					await grantCreditsIfNeeded({
+						userId,
+						amount: quantity,
+						reason: "Credit purchase",
+						relatedEntityId: id,
+						relatedEntityType: "ONE_TIME_PURCHASE",
+						metadata: {
+							productId,
+							quantity,
+							stripeEventId: event.id,
+						},
+					});
+				}
 
 				break;
 			}

@@ -45,6 +45,10 @@ export function MyCreditsView() {
 		setHasMore(!!result.nextCursor);
 	};
 
+	const handleTopupClick = () => {
+		setIsTopupOpen(true);
+	};
+
 	const transactions =
 		allTransactions.length > 0
 			? allTransactions
@@ -59,7 +63,7 @@ export function MyCreditsView() {
 						? balanceQuery.data.updatedAt.toString()
 						: null
 				}
-				onTopup={() => setIsTopupOpen(true)}
+				onTopup={handleTopupClick}
 			/>
 
 			<CreditTransactionHistory

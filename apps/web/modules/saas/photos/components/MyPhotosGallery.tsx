@@ -126,7 +126,7 @@ export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
 			>
 				<DialogContent
 					className={cn(
-						"relative max-w-5xl overflow-hidden border-border/60 bg-background/95 p-0 shadow-[0_40px_120px_-60px_rgba(15,23,42,0.7)]",
+						"max-w-5xl overflow-hidden border-border/60 bg-background/95 p-0 shadow-[0_40px_120px_-60px_rgba(15,23,42,0.7)]",
 						"before:pointer-events-none before:absolute before:inset-0 before:content-[''] before:bg-[radial-gradient(140%_90%_at_10%_10%,rgba(255,255,255,0.16),transparent_60%)]",
 					)}
 				>

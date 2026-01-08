@@ -3,11 +3,11 @@ import { GoogleGenAI } from "@google/genai";
 export async function restoreImage(
 	imageBuffer: Buffer,
 	mimeType = "image/png",
-	promptInput?: string | RestoreImageOptions,
+	options?: RestoreImageOptions,
 ): Promise<Buffer> {
 	const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
 	const base64Image = imageBuffer.toString("base64");
-	const promptText = resolvePromptText(promptInput);
+	const promptText = resolvePromptText(options);
 
 	const prompt = [
 		{ text: promptText },
@@ -19,9 +19,20 @@ export async function restoreImage(
 		},
 	];
 
+	const imageSize = resolveImageSize(options?.resolution);
 	const response = await ai.models.generateContent({
 		model: "gemini-3-pro-image-preview",
 		contents: prompt,
+		...(imageSize
+			? {
+					config: {
+						responseModalities: ["TEXT", "IMAGE"],
+						imageConfig: {
+							imageSize,
+						},
+					},
+				}
+			: {}),
 	});
 
 	if (!response.candidates?.[0]?.content?.parts)
@@ -52,7 +63,6 @@ export function getRestorationVariantId(index: number): string {
 
 function resolvePromptText(promptInput?: string | RestoreImageOptions): string {
 	if (!promptInput) return buildRestorationPrompt();
-	if (typeof promptInput === "string") return promptInput;
 	if (promptInput.promptText) return promptInput.promptText;
 
 	return buildRestorationPrompt(promptInput.variantId);
@@ -255,9 +265,25 @@ const RESTORATION_VARIANTS: Record<string, RestorationVariant> = {
 	},
 };
 
+function resolveImageSize(
+	resolution?: RestoreImageOptions["resolution"],
+): "1K" | "2K" | "4K" | undefined {
+	switch (resolution?.toLowerCase()) {
+		case "1k":
+			return "1K";
+		case "2k":
+			return "2K";
+		case "4k":
+			return "4K";
+		default:
+			return undefined;
+	}
+}
+
 interface RestoreImageOptions {
 	promptText?: string;
 	variantId?: string;
+	resolution?: string;
 }
 
 interface RestorationPrompt {

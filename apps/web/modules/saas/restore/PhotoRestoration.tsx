@@ -10,6 +10,12 @@ import {
 	DialogTitle,
 } from "@ui/components/dialog";
 import { cn } from "@ui/lib";
+import {
+	defaultRestorationResolution,
+	getRestorationResolutionOption,
+	restorationResolutionOptions,
+	type RestorationResolution,
+} from "@repo/utils";
 import { Download, Loader2, Sparkles, Upload } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { ImageCompareSlider } from "@shared/components/ImageCompareSlider";
@@ -30,6 +36,8 @@ export function PhotoRestoration() {
 	const [taskHandle, setTaskHandle] = useState<string | null>(null);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [banner, setBanner] = useState<BannerMessage | null>(null);
+	const [selectedResolution, setSelectedResolution] =
+		useState<RestorationResolution>(defaultRestorationResolution);
 	const beforeAfterRef = useRef<HTMLDivElement>(null);
 	const variationsListRef = useRef<HTMLDivElement>(null);
 
@@ -86,7 +94,10 @@ export function PhotoRestoration() {
 				);
 			}
 
-			const handle = await triggerRestorationMutation.mutateAsync({ imageId });
+			const handle = await triggerRestorationMutation.mutateAsync({
+				imageId,
+				resolution: selectedResolution,
+			});
 
 			setTaskHandle(handle);
 			setBanner({
@@ -214,6 +225,11 @@ export function PhotoRestoration() {
 	const hasRestorations = restoredImages.length > 0;
 	const isRestoreDisabled =
 		isSubmitting || isProcessing || createImageUploadUrlMutation.isPending;
+	const selectedResolutionOption =
+		getRestorationResolutionOption(selectedResolution);
+	const creditsLabel = formatCreditsLabel(
+		selectedResolutionOption.credits,
+	);
 
 		return (
 			<>
@@ -472,16 +488,77 @@ export function PhotoRestoration() {
 			<Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Consume 1 credit?</DialogTitle>
+						<DialogTitle>Consume {creditsLabel}?</DialogTitle>
 						<DialogDescription>
-							Here’s what happens when you restore this photo:
+							Choose an output resolution, then confirm to start processing.
 						</DialogDescription>
 					</DialogHeader>
 					<div className="space-y-4 text-sm text-muted-foreground">
+						<div className="space-y-3">
+							<div className="flex items-center justify-between text-sm font-semibold text-foreground">
+								<span>Output resolution</span>
+								<span className="text-xs font-normal text-muted-foreground">
+									Credits scale with size
+								</span>
+							</div>
+							<div
+								className="grid gap-2 sm:grid-cols-3"
+								role="radiogroup"
+								aria-label="Output resolution"
+							>
+								{restorationResolutionOptions.map((option) => {
+									const isSelected = option.id === selectedResolution;
+
+									return (
+										<Button
+											key={option.id}
+											type="button"
+											variant={isSelected ? "primary" : "outline"}
+											onClick={() => setSelectedResolution(option.id)}
+											disabled={isSubmitting || isProcessing}
+											role="radio"
+											aria-checked={isSelected}
+											className={cn(
+												"h-auto w-full flex-col items-start gap-1 px-3 py-2 text-left",
+												isSelected
+													? "shadow-[0_10px_25px_rgba(0,0,0,0.18)]"
+													: "hover:border-primary/40",
+											)}
+										>
+											<span
+												className={cn(
+													"text-sm font-semibold",
+													isSelected
+														? "text-primary-foreground"
+														: "text-foreground",
+												)}
+											>
+												{option.label}
+											</span>
+											<span
+												className={cn(
+													"text-xs",
+													isSelected
+														? "text-primary-foreground/80"
+														: "text-muted-foreground",
+												)}
+											>
+												{formatCreditsLabel(option.credits)}
+											</span>
+										</Button>
+									);
+								})}
+							</div>
+						</div>
 						<div className="rounded-lg border border-border/60 bg-muted/40 px-4 py-3 text-sm text-foreground">
-							<span className="font-semibold">1 credit</span> unlocks up to{" "}
+							<span className="font-semibold">{creditsLabel}</span> unlocks
+							up to{" "}
 							<span className="font-semibold">{restorationImageCount}</span>{" "}
-							restored version{restorationImageCount > 1 ? "s" : ""}.
+							restored version{restorationImageCount > 1 ? "s" : ""} at{" "}
+							<span className="font-semibold">
+								{selectedResolutionOption.label}
+							</span>{" "}
+							output.
 						</div>
 						<ul className="space-y-3">
 							<li className="flex gap-3">
@@ -535,6 +612,10 @@ function Banner({ message, onDismiss, type }: BannerProps) {
 			</div>
 		</div>
 	);
+}
+
+function formatCreditsLabel(credits: number) {
+	return `${credits} credit${credits === 1 ? "" : "s"}`;
 }
 
 function isSupportedImageType(mimeType: string) {

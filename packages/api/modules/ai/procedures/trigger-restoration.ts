@@ -1,6 +1,11 @@
 import { ORPCError } from "@orpc/client";
 import { db as prisma } from "@repo/database";
 import { restoreImageTask } from "@repo/tasks";
+import {
+	defaultRestorationResolution,
+	getRestorationCredits,
+	restorationResolutionIds,
+} from "@repo/utils";
 import { z } from "zod";
 import { protectedProcedure } from "../../../orpc/procedures";
 
@@ -16,10 +21,13 @@ export const triggerRestorationProcedure = protectedProcedure
 		z.object({
 			imageId: z.string(),
 			imageCount: z.number().int().positive().max(10).optional(),
+			resolution: z
+				.enum(restorationResolutionIds)
+				.default(defaultRestorationResolution),
 		}),
 	)
 	.handler(async ({ input, context }) => {
-		const { imageId, imageCount } = input;
+		const { imageId, imageCount, resolution } = input;
 		const { user } = context;
 
 		// Verify the image belongs to the user
@@ -34,14 +42,16 @@ export const triggerRestorationProcedure = protectedProcedure
 			throw new Error("Image not found");
 		}
 
-		// Ensure the user has at least 1 credit before triggering the task
+		// Ensure the user has enough credits before triggering the task
 		const creditBalance = await prisma.creditBalance.findUnique({
 			where: { userId: user.id },
 		});
 
-		if (!creditBalance || creditBalance.balance < 1) {
+		const requiredCredits = getRestorationCredits(resolution);
+
+		if (!creditBalance || creditBalance.balance < requiredCredits) {
 			throw new ORPCError("BAD_REQUEST", {
-				message: "Insufficient credits to restore photo",
+				message: `Insufficient credits to restore photo. ${requiredCredits} credit${requiredCredits === 1 ? "" : "s"} required.`,
 			});
 		}
 
@@ -52,6 +62,7 @@ export const triggerRestorationProcedure = protectedProcedure
 		const handle = await restoreImageTask.trigger({
 			imageId: image.id,
 			imageCount: resolvedImageCount,
+			resolution,
 		});
 
 			return {

@@ -5,8 +5,12 @@ import { task } from "@trigger.dev/sdk/v3";
 
 export const restoreImageTask = task({
 	id: "restore-image",
-	run: async (payload: { imageId: string; imageCount?: number }) => {
-		const { imageId, imageCount: inputImageCount } = payload;
+	run: async (payload: {
+		imageId: string;
+		imageCount?: number;
+		resolution?: RestorationResolution;
+	}) => {
+		const { imageId, imageCount: inputImageCount, resolution } = payload;
 		console.log("[restore-image] Task started", { imageId });
 
 		const bucket = process.env.NEXT_PUBLIC_PHOTO_RESTORATION_BUCKET_NAME;
@@ -27,7 +31,14 @@ export const restoreImageTask = task({
 			typeof inputImageCount === "number" && inputImageCount > 0
 				? inputImageCount
 				: envDefault;
-		console.log("[restore-image] Configuration", { bucket, imageCount });
+		const outputResolution = resolution ?? defaultRestorationResolution;
+		const creditsRequired = getRestorationCredits(outputResolution);
+		console.log("[restore-image] Configuration", {
+			bucket,
+			imageCount,
+			outputResolution,
+			creditsRequired,
+		});
 
 		// 1. Fetch the Image record from database
 		console.log("[restore-image] Fetching image record from database");
@@ -147,7 +158,7 @@ export const restoreImageTask = task({
 							restoredBuffer = await restoreImage(
 								imageBuffer,
 								mimeType,
-								{ variantId },
+								{ variantId, resolution: outputResolution },
 							);
 						}
 
@@ -235,7 +246,7 @@ export const restoreImageTask = task({
 				},
 			);
 
-			// Consume one credit after successful generation
+			// Consume credits after successful generation
 			await prisma.$transaction(async (tx) => {
 				const balance = await tx.creditBalance.upsert({
 					where: { userId },
@@ -243,14 +254,14 @@ export const restoreImageTask = task({
 					update: {},
 				});
 
-				if (balance.balance < 1) {
+				if (balance.balance < creditsRequired) {
 					throw new Error("Insufficient credits");
 				}
 
 				const updatedBalance = await tx.creditBalance.update({
 					where: { userId },
 					data: {
-						balance: { decrement: 1 },
+						balance: { decrement: creditsRequired },
 					},
 				});
 
@@ -258,13 +269,15 @@ export const restoreImageTask = task({
 					data: {
 						userId,
 						type: "CONSUMPTION",
-						amount: 1,
+						amount: creditsRequired,
 						balanceAfter: updatedBalance.balance,
 						reason: "Photo restoration",
 						relatedEntityId: imageRecord.id,
 						relatedEntityType: "IMAGE",
 						metadata: {
 							imageCount: results.length,
+							outputResolution,
+							creditsUsed: creditsRequired,
 						},
 					},
 				});
@@ -296,3 +309,19 @@ export const restoreImageTask = task({
 		}
 	},
 });
+
+const restorationResolutionIds = ["1k", "2k", "4k"] as const;
+
+type RestorationResolution = (typeof restorationResolutionIds)[number];
+
+const defaultRestorationResolution: RestorationResolution = "1k";
+
+const restorationResolutionCredits: Record<RestorationResolution, number> = {
+	"1k": 1,
+	"2k": 2,
+	"4k": 3,
+};
+
+function getRestorationCredits(resolution: RestorationResolution): number {
+	return restorationResolutionCredits[resolution];
+}

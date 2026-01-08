@@ -1,5 +1,6 @@
 import { orpcClient } from "@shared/lib/orpc-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { RestorationResolution } from "@repo/utils";
 
 export const restoreImageMutationKey = ["restore-image"] as const;
 
@@ -36,8 +37,17 @@ export const useCreateImageUploadUrl = () => {
 export const useTriggerRestoration = () => {
 	return useMutation({
 		mutationKey: ["trigger-restoration"],
-		mutationFn: async ({ imageId }: { imageId: string }) => {
-			const result = await orpcClient.ai.triggerRestoration({ imageId });
+		mutationFn: async ({
+			imageId,
+			resolution,
+		}: {
+			imageId: string;
+			resolution: RestorationResolution;
+		}) => {
+			const result = await orpcClient.ai.triggerRestoration({
+				imageId,
+				resolution,
+			});
 			return result.handle;
 		},
 	});

@@ -1,4 +1,4 @@
-import { restoreImage } from "@repo/ai/lib/restore";
+import { getRestorationVariantId, restoreImage } from "@repo/ai/lib/restore";
 import { db as prisma } from "@repo/database";
 import { getSignedUrl, uploadFile } from "@repo/storage";
 import { task } from "@trigger.dev/sdk/v3";
@@ -101,18 +101,20 @@ export const restoreImageTask = task({
 			console.log("[restore-image] Detected MIME type", { mimeType });
 
 			// 5. Restore the image multiple times in parallel
-			const isDevelopment = process.env.NODE_ENV === "development";
+			const isDevelopment = false;
 			console.log(
 				`[restore-image] Starting ${imageCount} AI restoration(s) in parallel${isDevelopment ? " (MOCK MODE)" : ""}`,
 			);
 
 			const restorationPromises = restoredRecords.map(
 				async (restoredRecord, index) => {
+					const variantId = getRestorationVariantId(index);
 					console.log(
 						`[restore-image] Starting restoration ${index + 1}/${imageCount}`,
 						{
 							restoredImageId: restoredRecord.id,
 							mode: isDevelopment ? "mock" : "real",
+							variantId,
 						},
 					);
 
@@ -145,6 +147,7 @@ export const restoreImageTask = task({
 							restoredBuffer = await restoreImage(
 								imageBuffer,
 								mimeType,
+								{ variantId },
 							);
 						}
 

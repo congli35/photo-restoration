@@ -1,6 +1,112 @@
 import { GoogleGenAI } from "@google/genai";
 
-const PORTRAIT_RESTORATION_PROMPT = JSON.stringify({
+export async function restoreImage(
+	imageBuffer: Buffer,
+	mimeType = "image/png",
+	promptInput?: string | RestoreImageOptions,
+): Promise<Buffer> {
+	const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
+	const base64Image = imageBuffer.toString("base64");
+	const promptText = resolvePromptText(promptInput);
+
+	const prompt = [
+		{ text: promptText },
+		{
+			inlineData: {
+				mimeType,
+				data: base64Image,
+			},
+		},
+	];
+
+	const response = await ai.models.generateContent({
+		model: "gemini-3-pro-image-preview",
+		contents: prompt,
+	});
+
+	if (!response.candidates?.[0]?.content?.parts)
+		throw new Error("No content generated from Gemini");
+
+	for (const part of response.candidates[0].content.parts) {
+		if (part.inlineData?.data)
+			return Buffer.from(part.inlineData.data, "base64");
+	}
+
+	throw new Error("No image data found in Gemini response");
+}
+
+export function buildRestorationPrompt(variantId?: string): string {
+	const variant = getRestorationVariant(variantId);
+	const prompt = mergeRestorationPrompt(BASE_PROMPT, variant.overrides);
+
+	return JSON.stringify(prompt);
+}
+
+export function getRestorationVariantId(index: number): string {
+	const safeIndex = Number.isFinite(index) ? Math.abs(index) : 0;
+
+	return RESTORATION_VARIANT_ORDER[
+		safeIndex % RESTORATION_VARIANT_ORDER.length
+	];
+}
+
+function resolvePromptText(promptInput?: string | RestoreImageOptions): string {
+	if (!promptInput) return buildRestorationPrompt();
+	if (typeof promptInput === "string") return promptInput;
+	if (promptInput.promptText) return promptInput.promptText;
+
+	return buildRestorationPrompt(promptInput.variantId);
+}
+
+function getRestorationVariant(variantId?: string): RestorationVariant {
+	if (variantId && RESTORATION_VARIANTS[variantId])
+		return RESTORATION_VARIANTS[variantId];
+
+	return RESTORATION_VARIANTS[DEFAULT_RESTORATION_VARIANT_ID];
+}
+
+function mergeRestorationPrompt(
+	base: RestorationPrompt,
+	overrides?: RestorationVariantOverrides,
+): RestorationPrompt {
+	if (!overrides) return base;
+
+	return {
+		task: overrides.task ?? base.task,
+		language: overrides.language ?? base.language,
+		prompt: mergePromptSections(base.prompt, overrides.prompt),
+		negative_prompt: overrides.negative_prompt ?? base.negative_prompt,
+		parameters: { ...base.parameters, ...overrides.parameters },
+	};
+}
+
+function mergePromptSections(
+	base: PromptSections,
+	overrides?: Partial<PromptSections>,
+): PromptSections {
+	if (!overrides) return base;
+
+	return {
+		subject: { ...base.subject, ...overrides.subject },
+		lighting: { ...base.lighting, ...overrides.lighting },
+		image_quality: {
+			...base.image_quality,
+			...overrides.image_quality,
+		},
+		optics: { ...base.optics, ...overrides.optics },
+		background: { ...base.background, ...overrides.background },
+		color_grading: { ...base.color_grading, ...overrides.color_grading },
+		style_constraints: {
+			...base.style_constraints,
+			...overrides.style_constraints,
+		},
+	};
+}
+
+const DEFAULT_RESTORATION_VARIANT_ID = "studio";
+const RESTORATION_VARIANT_ORDER = ["studio", "natural", "cinematic"];
+
+const BASE_PROMPT: RestorationPrompt = {
 	task: "portrait_restoration",
 	language: "zh-CN",
 	prompt: {
@@ -8,6 +114,7 @@ const PORTRAIT_RESTORATION_PROMPT = JSON.stringify({
 			type: "human_portrait",
 			identity_fidelity: "match_uploaded_face_100_percent",
 			no_facial_modification: true,
+			ethnicity_preservation: "detect_and_maintain_original_heritage",
 			expression: "natural",
 			eye_detail: "sharp_clear",
 			skin_texture: "ultra_realistic",
@@ -44,7 +151,7 @@ const PORTRAIT_RESTORATION_PROMPT = JSON.stringify({
 			style: "cinematic",
 			saturation: "rich_but_natural",
 			white_balance: "accurate",
-			skin_tone: "natural_true_to_subject",
+			skin_tone: "preserve_original_melanin_levels",
 		},
 		style_constraints: {
 			no_cartoon: true,
@@ -87,48 +194,100 @@ const PORTRAIT_RESTORATION_PROMPT = JSON.stringify({
 		skin_retention: "keep_pores_and_microtexture",
 		recommended_denoise: "low_to_medium",
 	},
-});
+};
 
-/**
- * Restore an image using Google Gemini model
- * @param imageBuffer Buffer of the image to restore
- * @param mimeType Mime type of the image (default: image/png)
- * @param promptText Prompt for the restoration(default: PORTRAIT_RESTORATION_PROMPT)
- * @returns Buffer of the restored image
- */
-export async function restoreImage(
-	imageBuffer: Buffer,
-	mimeType = "image/png",
-	promptText = PORTRAIT_RESTORATION_PROMPT,
-): Promise<Buffer> {
-	const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
-
-	const base64Image = imageBuffer.toString("base64");
-
-	const prompt = [
-		{ text: promptText },
-		{
-			inlineData: {
-				mimeType,
-				data: base64Image,
+const RESTORATION_VARIANTS: Record<string, RestorationVariant> = {
+	studio: {
+		id: "studio",
+		name: "Studio Polish",
+		overrides: {},
+	},
+	natural: {
+		id: "natural",
+		name: "Natural Realistic",
+		overrides: {
+			prompt: {
+				lighting: {
+					exposure: "neutral_clear",
+					style: "soft_natural_light",
+					specular_highlights: "subtle_natural",
+				},
+				optics: {
+					aperture: "f/2.8",
+					depth_of_field: "soft_shallow",
+				},
+				color_grading: {
+					style: "natural_documentary",
+					saturation: "natural",
+				},
+			},
+			parameters: {
+				realism_strength: 0.98,
+				recommended_denoise: "low",
 			},
 		},
-	];
+	},
+	cinematic: {
+		id: "cinematic",
+		name: "Cinematic Mood",
+		overrides: {
+			prompt: {
+				lighting: {
+					exposure: "dramatic_contrast",
+					style: "cinematic_key_light",
+					shadow_transition: "pronounced",
+				},
+				optics: {
+					lens: "50mm",
+					aperture: "f/1.4",
+					depth_of_field: "very_shallow",
+				},
+				color_grading: {
+					style: "cinematic",
+					saturation: "rich_but_natural",
+					white_balance: "warm",
+				},
+			},
+			parameters: {
+				realism_strength: 0.92,
+			},
+		},
+	},
+};
 
-	const response = await ai.models.generateContent({
-		model: "gemini-3-pro-image-preview",
-		contents: prompt,
-	});
+interface RestoreImageOptions {
+	promptText?: string;
+	variantId?: string;
+}
 
-	if (!response.candidates?.[0]?.content?.parts) {
-		throw new Error("No content generated from Gemini");
-	}
+interface RestorationPrompt {
+	task: string;
+	language: string;
+	prompt: PromptSections;
+	negative_prompt: string[];
+	parameters: Record<string, string | number>;
+}
 
-	for (const part of response.candidates[0].content.parts) {
-		if (part.inlineData?.data) {
-			return Buffer.from(part.inlineData.data, "base64");
-		}
-	}
+interface PromptSections {
+	subject: Record<string, string | number | boolean>;
+	lighting: Record<string, string | number | boolean>;
+	image_quality: Record<string, string | number | boolean>;
+	optics: Record<string, string | number | boolean>;
+	background: Record<string, string | number | boolean>;
+	color_grading: Record<string, string | number | boolean>;
+	style_constraints: Record<string, string | number | boolean>;
+}
 
-	throw new Error("No image data found in Gemini response");
+interface RestorationVariant {
+	id: string;
+	name: string;
+	overrides: RestorationVariantOverrides;
+}
+
+interface RestorationVariantOverrides {
+	task?: string;
+	language?: string;
+	prompt?: Partial<PromptSections>;
+	negative_prompt?: string[];
+	parameters?: Record<string, string | number>;
 }

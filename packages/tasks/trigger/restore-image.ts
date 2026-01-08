@@ -112,9 +112,10 @@ export const restoreImageTask = task({
 			console.log("[restore-image] Detected MIME type", { mimeType });
 
 			// 5. Restore the image multiple times in parallel
-			const isDevelopment = false;
+			const shouldReturnMockResult =
+				(process.env.RETURN_MOCK_RESULT ?? "false") === "true";
 			console.log(
-				`[restore-image] Starting ${imageCount} AI restoration(s) in parallel${isDevelopment ? " (MOCK MODE)" : ""}`,
+				`[restore-image] Starting ${imageCount} AI restoration(s) in parallel${shouldReturnMockResult ? " (MOCK MODE)" : ""}`,
 			);
 
 			const restorationPromises = restoredRecords.map(
@@ -124,7 +125,7 @@ export const restoreImageTask = task({
 						`[restore-image] Starting restoration ${index + 1}/${imageCount}`,
 						{
 							restoredImageId: restoredRecord.id,
-							mode: isDevelopment ? "mock" : "real",
+							mode: shouldReturnMockResult ? "mock" : "real",
 							variantId,
 						},
 					);
@@ -132,10 +133,10 @@ export const restoreImageTask = task({
 					try {
 						let restoredBuffer: Buffer;
 
-						if (isDevelopment) {
-							// In development, use the mock result image instead of calling Gemini
+						if (shouldReturnMockResult) {
+							// Use the mock result image instead of calling Gemini
 							console.log(
-								"[restore-image] Using mock result (development mode)",
+								"[restore-image] Using mock result (RETURN_MOCK_RESULT=true)",
 							);
 							const fs = await import("fs/promises");
 							const path = await import("path");

@@ -37,6 +37,7 @@ export function ConfirmationAlertProvider({ children }: PropsWithChildren) {
 	const [confirmOptions, setConfirmOptions] = useState<ConfirmOptions | null>(
 		null,
 	);
+	const [isConfirming, setIsConfirming] = useState(false);
 
 	const confirm = (options: ConfirmOptions) => {
 		setConfirmOptions(options);
@@ -48,9 +49,12 @@ export function ConfirmationAlertProvider({ children }: PropsWithChildren) {
 
 			<AlertDialog
 				open={!!confirmOptions}
-				onOpenChange={(open) =>
-					setConfirmOptions(open ? confirmOptions : null)
-				}
+				onOpenChange={(open) => {
+					if (!open) {
+						setConfirmOptions(null);
+						setIsConfirming(false);
+					}
+				}}
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
@@ -63,7 +67,7 @@ export function ConfirmationAlertProvider({ children }: PropsWithChildren) {
 					</AlertDialogDescription>
 
 					<AlertDialogFooter>
-						<AlertDialogCancel>
+						<AlertDialogCancel disabled={isConfirming}>
 							{confirmOptions?.cancelLabel ??
 								t("common.confirmation.cancel")}
 						</AlertDialogCancel>
@@ -73,9 +77,20 @@ export function ConfirmationAlertProvider({ children }: PropsWithChildren) {
 									? "error"
 									: "primary"
 							}
+							loading={isConfirming}
+							disabled={isConfirming}
 							onClick={async () => {
-								await confirmOptions?.onConfirm();
-								setConfirmOptions(null);
+								if (isConfirming) {
+									return;
+								}
+
+								setIsConfirming(true);
+								try {
+									await confirmOptions?.onConfirm();
+								} finally {
+									setConfirmOptions(null);
+									setIsConfirming(false);
+								}
 							}}
 						>
 							{confirmOptions?.confirmLabel ??

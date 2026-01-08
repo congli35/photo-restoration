@@ -1,6 +1,7 @@
 import { addMessageToChat } from "./procedures/add-message-to-chat";
 import { createChat } from "./procedures/create-chat";
 import { createImageUploadUrl } from "./procedures/create-image-upload-url";
+import { deleteImageProcedure } from "./procedures/delete-image";
 import { deleteChat } from "./procedures/delete-chat";
 import { findChat } from "./procedures/find-chat";
 import { getRestorationProcedure } from "./procedures/get-restoration";
@@ -24,4 +25,7 @@ export const aiRouter = {
 	},
 	imageUploadUrl: createImageUploadUrl,
 	triggerRestoration: triggerRestorationProcedure,
+	images: {
+		delete: deleteImageProcedure,
+	},
 };

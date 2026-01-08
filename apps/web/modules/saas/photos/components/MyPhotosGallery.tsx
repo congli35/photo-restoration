@@ -2,6 +2,10 @@
 
 import type { PhotoCardData, RestorationData } from "@saas/photos/types";
 import { formatDate, formatVersionLabel } from "@saas/photos/utils";
+import { useConfirmationAlert } from "@saas/shared/components/ConfirmationAlertProvider";
+import { useRouter } from "@shared/hooks/router";
+import { orpc } from "@shared/lib/orpc-query-utils";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@ui/components/button";
 import { Dialog, DialogContent, DialogTitle } from "@ui/components/dialog";
 import { cn } from "@ui/lib";
@@ -12,12 +16,21 @@ import {
 	Eye,
 	Image as ImageIcon,
 	Sparkles,
+	Trash2,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
+	const router = useRouter();
+	const { confirm } = useConfirmationAlert();
 	const [selectedPhotoSet, setSelectedPhotoSet] =
 		useState<SelectedPhotoSet | null>(null);
+	const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
+
+	const deleteImageMutation = useMutation(
+		orpc.ai.images.delete.mutationOptions(),
+	);
 
 	const selectedPhoto = selectedPhotoSet
 		? selectedPhotoSet.photos[selectedPhotoSet.index]
@@ -29,12 +42,17 @@ export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
 		}
 	};
 
-	const handleOpenPhoto = (photoSet: SelectedPhoto[], index: number) => {
+	const handleOpenPhoto = (
+		photoId: string,
+		photoSet: SelectedPhoto[],
+		index: number,
+	) => {
 		if (photoSet.length === 0) {
 			return;
 		}
 
 		setSelectedPhotoSet({
+			photoId,
 			photos: photoSet,
 			index,
 		});
@@ -47,6 +65,7 @@ export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
 			}
 
 			return {
+				photoId: currentSet.photoId,
 				photos: currentSet.photos,
 				index,
 			};
@@ -60,6 +79,7 @@ export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
 			}
 
 			return {
+				photoId: currentSet.photoId,
 				photos: currentSet.photos,
 				index: currentSet.index - 1,
 			};
@@ -76,6 +96,7 @@ export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
 			}
 
 			return {
+				photoId: currentSet.photoId,
 				photos: currentSet.photos,
 				index: currentSet.index + 1,
 			};
@@ -103,6 +124,41 @@ export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
 		}
 	};
 
+	const handleDelete = (photoId: string) => {
+		if (deleteImageMutation.isPending && deletingPhotoId === photoId) {
+			return;
+		}
+
+		confirm({
+			title: "Delete this photo?",
+			message:
+				"This will permanently remove the original and all restorations.",
+			confirmLabel: "Delete photo",
+			destructive: true,
+			onConfirm: async () => {
+				if (deleteImageMutation.isPending) {
+					return;
+				}
+
+				setDeletingPhotoId(photoId);
+				try {
+					await deleteImageMutation.mutateAsync({ id: photoId });
+					toast.success("Photo deleted.");
+					setSelectedPhotoSet(null);
+					router.refresh();
+				} catch {
+					toast.error("Failed to delete photo.");
+				} finally {
+					setDeletingPhotoId(null);
+				}
+			},
+		});
+	};
+
+	const isDeletingSelectedPhoto =
+		deleteImageMutation.isPending &&
+		deletingPhotoId === selectedPhotoSet?.photoId;
+
 	return (
 		<section className="flex flex-col gap-6">
 			{photos.length === 0 ? (
@@ -115,6 +171,9 @@ export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
 							photo={photo}
 							photoNumber={index + 1}
 							onOpen={handleOpenPhoto}
+							onDelete={handleDelete}
+							isDeleting={deleteImageMutation.isPending}
+							deletingPhotoId={deletingPhotoId}
 						/>
 					))}
 				</div>
@@ -245,6 +304,21 @@ export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
 								<Download className="size-4" />
 								Download
 							</Button>
+							{selectedPhotoSet ? (
+								<Button
+									className="w-full gap-2"
+									variant="error"
+									type="button"
+									loading={isDeletingSelectedPhoto}
+									disabled={isDeletingSelectedPhoto}
+									onClick={() =>
+										handleDelete(selectedPhotoSet.photoId)
+									}
+								>
+									<Trash2 className="size-4" />
+									Delete photo
+								</Button>
+							) : null}
 						</div>
 					</div>
 				</DialogContent>
@@ -257,10 +331,16 @@ function PhotoCard({
 	photo,
 	photoNumber,
 	onOpen,
+	onDelete,
+	isDeleting,
+	deletingPhotoId,
 }: {
 	photo: PhotoCardData;
 	photoNumber: number;
-	onOpen: (photoSet: SelectedPhoto[], index: number) => void;
+	onOpen: (photoId: string, photoSet: SelectedPhoto[], index: number) => void;
+	onDelete: (photoId: string) => void;
+	isDeleting: boolean;
+	deletingPhotoId: string | null;
 }) {
 	const completedRestorations = photo.restorations.filter(
 		(restoration) => restoration.status === "COMPLETED" && restoration.url,
@@ -289,6 +369,20 @@ function PhotoCard({
 			)}
 		>
 			<div className="pointer-events-none absolute -right-16 -top-16 size-40 rounded-full bg-primary/10 blur-3xl" />
+			<Button
+				className={cn(
+					"absolute right-4 top-4 z-20 rounded-full border border-white/10 opacity-100 shadow-sm transition md:opacity-0 md:group-hover:opacity-100",
+				)}
+				variant="error"
+				size="icon"
+				type="button"
+				loading={isDeleting && deletingPhotoId === photo.id}
+				disabled={isDeleting && deletingPhotoId === photo.id}
+				onClick={() => onDelete(photo.id)}
+				aria-label="Delete photo"
+			>
+				<Trash2 className="size-4" />
+			</Button>
 			<div className="relative">
 				<div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/30">
 					<div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(15,23,42,0.6),transparent_55%)] opacity-80" />
@@ -300,7 +394,7 @@ function PhotoCard({
 						<button
 							className="h-full w-full"
 							type="button"
-							onClick={() => onOpen(selectedPhotos, 0)}
+							onClick={() => onOpen(photo.id, selectedPhotos, 0)}
 						>
 							<img
 								src={photo.originalUrl ?? ""}
@@ -319,7 +413,7 @@ function PhotoCard({
 							<button
 								className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white backdrop-blur-md transition-all hover:scale-105 hover:bg-white hover:text-primary"
 								type="button"
-								onClick={() => onOpen(selectedPhotos, 0)}
+								onClick={() => onOpen(photo.id, selectedPhotos, 0)}
 							>
 								<Eye className="size-4" />
 								View
@@ -351,6 +445,7 @@ function PhotoCard({
 											key={restoration.id}
 											restoration={restoration}
 											onOpen={onOpen}
+											photoId={photo.id}
 											photoSet={selectedPhotos}
 											index={
 												photoIndexByUrl.get(restoration.url ?? "") ??
@@ -381,11 +476,13 @@ function PhotoCard({
 function RestoredThumbnail({
 	restoration,
 	onOpen,
+	photoId,
 	photoSet,
 	index,
 }: {
 	restoration: RestorationData;
-	onOpen: (photoSet: SelectedPhoto[], index: number) => void;
+	onOpen: (photoId: string, photoSet: SelectedPhoto[], index: number) => void;
+	photoId: string;
 	photoSet: SelectedPhoto[];
 	index: number;
 }) {
@@ -397,7 +494,7 @@ function RestoredThumbnail({
 		<button
 			className="relative flex-shrink-0"
 			type="button"
-			onClick={() => onOpen(photoSet, index)}
+			onClick={() => onOpen(photoId, photoSet, index)}
 		>
 			<img
 				src={restoration.url}
@@ -487,6 +584,7 @@ interface SelectedPhoto {
 }
 
 interface SelectedPhotoSet {
+	photoId: string;
 	photos: SelectedPhoto[];
 	index: number;
 }

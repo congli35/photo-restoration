@@ -20,3 +20,10 @@ export type GetSignedUrlHander = (
 		expiresIn?: number;
 	},
 ) => Promise<string>;
+
+export type DeleteFilesHandler = (
+	paths: string[],
+	options: {
+		bucket: string;
+	},
+) => Promise<void>;

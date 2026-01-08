@@ -1,4 +1,5 @@
 import {
+	DeleteObjectsCommand,
 	GetObjectCommand,
 	PutObjectCommand,
 	S3Client,
@@ -6,6 +7,7 @@ import {
 import { getSignedUrl as getS3SignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@repo/logs";
 import type {
+	DeleteFilesHandler,
 	GetSignedUploadUrlHandler,
 	GetSignedUrlHander,
 } from "../../types";
@@ -107,5 +109,29 @@ export const uploadFile = async (
 	} catch (e) {
 		logger.error(e);
 		throw new Error("Could not upload file");
+	}
+};
+
+export const deleteFiles: DeleteFilesHandler = async (
+	paths,
+	{ bucket },
+) => {
+	if (paths.length === 0) {
+		return;
+	}
+
+	const s3Client = getS3Client();
+	try {
+		await s3Client.send(
+			new DeleteObjectsCommand({
+				Bucket: bucket,
+				Delete: {
+					Objects: paths.map((path) => ({ Key: path })),
+				},
+			}),
+		);
+	} catch (e) {
+		logger.error(e);
+		throw new Error("Could not delete files");
 	}
 };

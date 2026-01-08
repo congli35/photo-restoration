@@ -41,6 +41,14 @@ export function PhotoRestoration() {
 		if (!e.target.files?.[0]) return;
 
 		const selectedFile = e.target.files[0];
+		if (!isSupportedImageType(selectedFile.type)) {
+			setBanner({
+				type: "error",
+				message: `Unsupported file type. Supported formats: ${supportedImageBadgeLabel}.`,
+			});
+			e.target.value = "";
+			return;
+		}
 		setFile(selectedFile);
 		setOriginalPreview(URL.createObjectURL(selectedFile));
 		setRestoredImages([]);
@@ -313,7 +321,7 @@ export function PhotoRestoration() {
 											</div>
 										<input
 											type="file"
-											accept="image/*"
+											accept={supportedImageMimeTypes.join(",")}
 											onChange={handleFileChange}
 											className="hidden"
 											id="photo-upload"
@@ -326,7 +334,7 @@ export function PhotoRestoration() {
 											</label>
 											<div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
 												<span className="rounded-full border border-border/60 bg-background/70 px-3 py-1">
-													JPG / PNG / HEIC
+													{supportedImageBadgeLabel}
 												</span>
 												<span className="rounded-full border border-border/60 bg-background/70 px-3 py-1">
 													Up to {restorationImageCount} variations
@@ -529,6 +537,25 @@ function Banner({ message, onDismiss, type }: BannerProps) {
 	);
 }
 
+function isSupportedImageType(mimeType: string) {
+	return supportedImageMimeTypes.includes(mimeType);
+}
+
+const supportedImageFormats = [
+	{ label: "PNG", mimeType: "image/png" },
+	{ label: "JPEG", mimeType: "image/jpeg" },
+	{ label: "WEBP", mimeType: "image/webp" },
+	{ label: "HEIC", mimeType: "image/heic" },
+	{ label: "HEIF", mimeType: "image/heif" },
+] satisfies SupportedImageFormat[];
+
+const supportedImageMimeTypes = supportedImageFormats.map(
+	(format) => format.mimeType,
+);
+const supportedImageBadgeLabel = supportedImageFormats
+	.map((format) => format.label)
+	.join(" / ");
+
 const bannerStyles = {
 	success:
 		"border-emerald-200/80 bg-emerald-50 text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-100",
@@ -555,6 +582,11 @@ interface RestoredImage {
 	id: string;
 	url: string;
 	base64: string;
+}
+
+interface SupportedImageFormat {
+	label: string;
+	mimeType: string;
 }
 
 interface BannerMessage {

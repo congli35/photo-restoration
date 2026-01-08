@@ -61,7 +61,7 @@ export function getRestorationVariantId(index: number): string {
 	];
 }
 
-function resolvePromptText(promptInput?: string | RestoreImageOptions): string {
+function resolvePromptText(promptInput?: RestoreImageOptions): string {
 	if (!promptInput) return buildRestorationPrompt();
 	if (promptInput.promptText) return promptInput.promptText;
 

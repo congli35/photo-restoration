@@ -23,6 +23,7 @@ import {
 	createImagePreviewUrl,
 	revokePreviewUrl,
 } from "@shared/lib/image-preview";
+import { LocaleLink } from "@i18n/routing";
 import { orpc } from "@shared/lib/orpc-query-utils";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -684,6 +685,13 @@ export function PhotoRestoration() {
 						>
 							Cancel
 						</Button>
+						{!hasEnoughCredits && (
+							<Button variant="secondary" asChild type="button">
+								<LocaleLink href="/app/my-credits">
+									Top up credits
+								</LocaleLink>
+							</Button>
+						)}
 						<Button
 							onClick={handleConfirmRestore}
 							loading={isSubmitting}

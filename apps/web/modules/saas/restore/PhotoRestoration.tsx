@@ -23,6 +23,8 @@ import {
 	createImagePreviewUrl,
 	revokePreviewUrl,
 } from "@shared/lib/image-preview";
+import { orpc } from "@shared/lib/orpc-query-utils";
+import { useQuery } from "@tanstack/react-query";
 import {
 	useCreateImageUploadUrl,
 	useRestorationStatusQuery,
@@ -49,6 +51,10 @@ export function PhotoRestoration() {
 	const createImageUploadUrlMutation = useCreateImageUploadUrl();
 	const triggerRestorationMutation = useTriggerRestoration();
 	const { data: restorationStatus } = useRestorationStatusQuery(taskHandle);
+	const creditsBalanceQuery = useQuery({
+		...orpc.credits.balance.queryOptions(),
+		queryKey: ["credits", "balance"],
+	});
 
 	const handleFileChange = async (
 		e: React.ChangeEvent<HTMLInputElement>,
@@ -146,6 +152,21 @@ export function PhotoRestoration() {
 	};
 
 	const handleConfirmRestore = async () => {
+		if (creditsBalanceQuery.isLoading || creditsBalanceQuery.isError) {
+			setBanner({
+				type: "error",
+				message: "Unable to verify credits right now. Please try again.",
+			});
+			return;
+		}
+		if (!hasEnoughCredits) {
+			setBanner({
+				type: "error",
+				message:
+					"Not enough credits for the selected resolution. Please top up or choose a smaller size.",
+			});
+			return;
+		}
 		setIsConfirmOpen(false);
 		await handleRestore();
 	};
@@ -263,6 +284,15 @@ export function PhotoRestoration() {
 	const creditsLabel = formatCreditsLabel(
 		selectedResolutionOption.credits,
 	);
+	const availableCredits = creditsBalanceQuery.data?.balance ?? 0;
+	const hasEnoughCredits =
+		availableCredits >= selectedResolutionOption.credits;
+	const isConfirmDisabled =
+		isSubmitting ||
+		isProcessing ||
+		creditsBalanceQuery.isLoading ||
+		creditsBalanceQuery.isError ||
+		!hasEnoughCredits;
 
 		return (
 			<>
@@ -607,6 +637,34 @@ export function PhotoRestoration() {
 							</span>{" "}
 							output.
 						</div>
+						{creditsBalanceQuery.isLoading ? (
+							<div className="rounded-lg border border-border/60 bg-background/60 px-4 py-3 text-xs text-muted-foreground">
+								Checking available credits...
+							</div>
+						) : creditsBalanceQuery.isError ? (
+							<div className="rounded-lg border border-rose-200/80 bg-rose-50 px-4 py-3 text-xs text-rose-900 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-100">
+								Unable to load credits. Please refresh and try again.
+							</div>
+						) : (
+							<div
+								className={cn(
+									"rounded-lg border px-4 py-3 text-xs",
+									hasEnoughCredits
+										? "border-emerald-200/80 bg-emerald-50 text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-100"
+										: "border-rose-200/80 bg-rose-50 text-rose-900 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-100",
+								)}
+							>
+								<span className="font-semibold">
+									{formatCreditsLabel(availableCredits)}
+								</span>{" "}
+								available.
+								{!hasEnoughCredits && (
+									<span className="ml-1">
+										You need {creditsLabel} to confirm.
+									</span>
+								)}
+							</div>
+						)}
 						<ul className="space-y-3">
 							<li className="flex gap-3">
 								<span className="mt-1 size-2 rounded-full bg-primary/70" />
@@ -630,6 +688,7 @@ export function PhotoRestoration() {
 							onClick={handleConfirmRestore}
 							loading={isSubmitting}
 							type="button"
+							disabled={isConfirmDisabled}
 						>
 							Confirm
 						</Button>

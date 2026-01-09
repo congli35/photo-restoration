@@ -12,7 +12,7 @@ export function Logo({ withLabel = true }: LogoProps) {
 				src={logoSrc}
 				width={48}
 			/>
-			{withLabel && <span className="ml-3 text-xl">acme</span>}
+			{withLabel && <span className="ml-3 text-xl">PhotoRestore</span>}
 		</span>
 	);
 }

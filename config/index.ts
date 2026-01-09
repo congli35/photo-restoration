@@ -58,7 +58,7 @@ export const config = {
 		// Whether users should be able to sign in with a social provider
 		enableSocialLogin: true,
 		// Whether users should be able to sign in with a passkey
-		enablePasskeys: true,
+		enablePasskeys: false,
 		// Whether users should be able to sign in with a password
 		enablePasswordLogin: true,
 		// Whether users should be activate two factor authentication

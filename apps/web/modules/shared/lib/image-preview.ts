@@ -8,7 +8,7 @@ export interface ImagePreviewSource {
 	mimeType?: string;
 }
 
-export function isBlobUrl(value?: string | null) {
+export function isBlobUrl(value?: string | null): value is string {
 	return Boolean(value?.startsWith("blob:"));
 }
 

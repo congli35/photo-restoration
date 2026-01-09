@@ -20,6 +20,10 @@ import { Download, Loader2, Sparkles, Upload } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { ImageCompareSlider } from "@shared/components/ImageCompareSlider";
 import {
+	createImagePreviewUrl,
+	revokePreviewUrl,
+} from "@shared/lib/image-preview";
+import {
 	useCreateImageUploadUrl,
 	useRestorationStatusQuery,
 	useTriggerRestoration,
@@ -31,6 +35,7 @@ export function PhotoRestoration() {
 	const [restoredImages, setRestoredImages] = useState<RestoredImage[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isProcessing, setIsProcessing] = useState(false);
+	const [isPreviewConverting, setIsPreviewConverting] = useState(false);
 	const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 	const [sliderPosition, setSliderPosition] = useState(50);
 	const [taskHandle, setTaskHandle] = useState<string | null>(null);
@@ -45,7 +50,9 @@ export function PhotoRestoration() {
 	const triggerRestorationMutation = useTriggerRestoration();
 	const { data: restorationStatus } = useRestorationStatusQuery(taskHandle);
 
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleFileChange = async (
+		e: React.ChangeEvent<HTMLInputElement>,
+	) => {
 		if (!e.target.files?.[0]) return;
 
 		const selectedFile = e.target.files[0];
@@ -58,7 +65,22 @@ export function PhotoRestoration() {
 			return;
 		}
 		setFile(selectedFile);
-		setOriginalPreview(URL.createObjectURL(selectedFile));
+		setOriginalPreview(null);
+		setIsPreviewConverting(true);
+		try {
+			const previewUrl = await createImagePreviewUrl({ file: selectedFile });
+			setOriginalPreview(previewUrl);
+		} catch (error) {
+			console.error("[PhotoRestoration] Preview error:", error);
+			setOriginalPreview(URL.createObjectURL(selectedFile));
+			setBanner({
+				type: "error",
+				message:
+					"Preview generation failed for this file. We'll still upload the original image.",
+			});
+		} finally {
+			setIsPreviewConverting(false);
+		}
 		setRestoredImages([]);
 		setTaskHandle(null);
 		setIsSubmitting(false);
@@ -200,6 +222,12 @@ export function PhotoRestoration() {
 	}, [restorationStatus]);
 
 	useEffect(() => {
+		return () => {
+			revokePreviewUrl(originalPreview);
+		};
+	}, [originalPreview]);
+
+	useEffect(() => {
 		const beforeAfter = beforeAfterRef.current;
 		const variationsList = variationsListRef.current;
 
@@ -215,7 +243,7 @@ export function PhotoRestoration() {
 		resizeObserver.observe(beforeAfter);
 
 		return () => resizeObserver.disconnect();
-	}, [originalPreview, restoredImages, selectedImageIndex]);
+	}, [file, originalPreview, restoredImages, selectedImageIndex]);
 
 	const handleSliderChange = (value: number) => {
 		setSliderPosition(value);
@@ -223,8 +251,13 @@ export function PhotoRestoration() {
 
 	const selectedRestoredImage = restoredImages[selectedImageIndex] ?? null;
 	const hasRestorations = restoredImages.length > 0;
+	const hasFile = Boolean(file);
+	const hasPreview = Boolean(originalPreview);
 	const isRestoreDisabled =
-		isSubmitting || isProcessing || createImageUploadUrlMutation.isPending;
+		isSubmitting ||
+		isProcessing ||
+		isPreviewConverting ||
+		createImageUploadUrlMutation.isPending;
 	const selectedResolutionOption =
 		getRestorationResolutionOption(selectedResolution);
 	const creditsLabel = formatCreditsLabel(
@@ -263,7 +296,7 @@ export function PhotoRestoration() {
 									/>
 								</div>
 							)}
-							{originalPreview && (
+							{hasFile && (
 								<div className="mt-4 flex flex-wrap items-center gap-3 px-2 sm:px-4 md:px-6">
 									<Button
 										variant="outline"
@@ -306,6 +339,8 @@ export function PhotoRestoration() {
 											>
 												{isSubmitting || isProcessing ? (
 													<>Restoring...</>
+												) : isPreviewConverting ? (
+													<>Preparing preview...</>
 												) : (
 													<>
 														<Sparkles className="h-4 w-4" /> Restore Photo
@@ -318,7 +353,7 @@ export function PhotoRestoration() {
 							)}
 							<div className="mt-6 grid items-start gap-8 px-2 pb-2 sm:px-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)] md:px-6 md:pb-4">
 								<div className="space-y-6">
-									{!originalPreview ? (
+									{!hasFile ? (
 										<div className="group relative overflow-hidden rounded-2xl border border-dashed border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background p-6 transition duration-500 hover:-translate-y-0.5 hover:border-primary/50 md:p-8">
 										<div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.12)_1px,transparent_0)] [background-size:22px_22px] dark:[background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.14)_1px,transparent_0)]" />
 										<div className="relative flex flex-col gap-6">
@@ -371,52 +406,64 @@ export function PhotoRestoration() {
 												{selectedRestoredImage ? "Enhanced" : "Awaiting Output"}
 											</span>
 										</div>
-										<ImageCompareSlider
-											frameRef={beforeAfterRef}
-											frameClassName="relative"
-											beforeImage={{
-												src: originalPreview,
-												alt: "Original",
-												className:
-													"w-full object-cover transition duration-700 group-hover:scale-[1.01]",
-											}}
-											afterImage={
-												selectedRestoredImage
-													? {
-															src: selectedRestoredImage.url,
-															alt: "Restored",
-															className:
-																"h-full w-full object-cover transition duration-700 group-hover:scale-[1.01]",
-														}
-													: null
-											}
-											beforeLabel={
-												<span className="rounded-full border border-white/30 bg-black/50 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
-													Original
-												</span>
-											}
-											afterLabel={
-												<span className="flex items-center gap-2 rounded-full border border-white/30 bg-primary/80 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
-													<Sparkles className="size-3" /> AI Enhanced
-												</span>
-											}
-											handle={<Sparkles className="h-5 w-5" />}
-											handleClassName="bg-white/90 text-primary shadow-[0_15px_30px_rgba(0,0,0,0.25)] transition duration-300 group-hover:scale-105"
-											overlay={
-												isProcessing ? (
-													<div className="absolute inset-0 z-30 flex items-center justify-center gap-3 bg-background/70 backdrop-blur-sm">
-														<Loader2 className="h-5 w-5 animate-spin text-primary" />
-														<span className="text-sm font-medium text-foreground">
-															Restoring photo... credits apply after completion.
-														</span>
-													</div>
-												) : null
-											}
-											position={sliderPosition}
-											onPositionChange={handleSliderChange}
-											isInteractive={Boolean(selectedRestoredImage)}
-											inputAriaLabel="Compare original and restored photo"
-										/>
+										{hasPreview ? (
+											<ImageCompareSlider
+												frameRef={beforeAfterRef}
+												frameClassName="relative"
+												beforeImage={{
+													src: originalPreview ?? "",
+													alt: "Original",
+													className:
+														"w-full object-cover transition duration-700 group-hover:scale-[1.01]",
+												}}
+												afterImage={
+													selectedRestoredImage
+														? {
+																src: selectedRestoredImage.url,
+																alt: "Restored",
+																className:
+																	"h-full w-full object-cover transition duration-700 group-hover:scale-[1.01]",
+															}
+														: null
+												}
+												beforeLabel={
+													<span className="rounded-full border border-white/30 bg-black/50 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
+														Original
+													</span>
+												}
+												afterLabel={
+													<span className="flex items-center gap-2 rounded-full border border-white/30 bg-primary/80 px-3 py-1 text-xs font-semibold text-white shadow-[0_10px_20px_rgba(0,0,0,0.25)]">
+														<Sparkles className="size-3" /> AI Enhanced
+													</span>
+												}
+												handle={<Sparkles className="h-5 w-5" />}
+												handleClassName="bg-white/90 text-primary shadow-[0_15px_30px_rgba(0,0,0,0.25)] transition duration-300 group-hover:scale-105"
+												overlay={
+													isProcessing ? (
+														<div className="absolute inset-0 z-30 flex items-center justify-center gap-3 bg-background/70 backdrop-blur-sm">
+															<Loader2 className="h-5 w-5 animate-spin text-primary" />
+															<span className="text-sm font-medium text-foreground">
+																Restoring photo... credits apply after completion.
+															</span>
+														</div>
+													) : null
+												}
+												position={sliderPosition}
+												onPositionChange={handleSliderChange}
+												isInteractive={Boolean(selectedRestoredImage)}
+												inputAriaLabel="Compare original and restored photo"
+											/>
+										) : (
+											<div
+												ref={beforeAfterRef}
+												className="relative flex min-h-[320px] items-center justify-center"
+											>
+												<div className="flex items-center gap-3 text-sm text-muted-foreground">
+													<Loader2 className="h-5 w-5 animate-spin text-primary" />
+													<span>Preparing preview...</span>
+												</div>
+											</div>
+										)}
 									</div>
 
 									<div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -475,7 +522,7 @@ export function PhotoRestoration() {
 								</div>
 							</div>
 
-							{originalPreview && !hasRestorations && (
+							{hasFile && !hasRestorations && (
 								<div className="rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
 									<span className="font-semibold text-foreground">Ready to restore?</span>{" "}
 									Confirm to begin processing your photo.

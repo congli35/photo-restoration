@@ -5,6 +5,11 @@ import { formatDate, formatVersionLabel } from "@saas/photos/utils";
 import { useConfirmationAlert } from "@saas/shared/components/ConfirmationAlertProvider";
 import { useRouter } from "@shared/hooks/router";
 import { orpc } from "@shared/lib/orpc-query-utils";
+import {
+	createImagePreviewUrl,
+	revokePreviewUrl,
+	shouldCreateImagePreview,
+} from "@shared/lib/image-preview";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@ui/components/button";
 import { Dialog, DialogContent, DialogTitle } from "@ui/components/dialog";
@@ -18,7 +23,8 @@ import {
 	Sparkles,
 	Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import type { ComponentPropsWithoutRef } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
@@ -191,9 +197,9 @@ export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
 				>
 					<div className="relative grid gap-6 p-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]">
 						<div className="flex flex-col gap-4">
-							<div className="relative overflow-hidden rounded-2xl border border-border/60 bg-muted/30 p-3">
+										<div className="relative overflow-hidden rounded-2xl border border-border/60 bg-muted/30 p-3">
 								{selectedPhoto?.url ? (
-									<img
+									<HeicPreviewImage
 										src={selectedPhoto.url}
 										alt={selectedPhoto.title}
 										className="max-h-[70vh] w-full rounded-xl bg-black/5 object-contain"
@@ -247,7 +253,7 @@ export function MyPhotosGallery({ photos }: MyPhotosGalleryProps) {
 											type="button"
 											onClick={() => handleSelectIndex(index)}
 										>
-											<img
+											<HeicPreviewImage
 												src={photo.url}
 												alt={photo.title}
 												className="h-full w-full object-cover"
@@ -396,7 +402,7 @@ function PhotoCard({
 							type="button"
 							onClick={() => onOpen(photo.id, selectedPhotos, 0)}
 						>
-							<img
+							<HeicPreviewImage
 								src={photo.originalUrl ?? ""}
 								alt={`Original upload ${photoNumber}`}
 								className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -496,7 +502,7 @@ function RestoredThumbnail({
 			type="button"
 			onClick={() => onOpen(photoId, photoSet, index)}
 		>
-			<img
+			<HeicPreviewImage
 				src={restoration.url}
 				alt="Restored version"
 				className="h-16 w-16 rounded-xl object-cover ring-1 ring-border/70 shadow-sm transition-all hover:-translate-y-0.5 hover:ring-2 hover:ring-primary/70"
@@ -519,6 +525,75 @@ function RestoredPlaceholder({
 			<span className="h-1 w-5 rounded-full bg-border/70" />
 			{isFailed ? "Failed" : label}
 		</div>
+	);
+}
+
+function HeicPreviewImage({
+	src,
+	alt,
+	className,
+	...props
+}: HeicPreviewImageProps) {
+	const [previewUrl, setPreviewUrl] = useState<string | null>(() => {
+		if (!src) return null;
+		return shouldCreateImagePreview({ url: src }) ? null : src;
+	});
+	const [isLoading, setIsLoading] = useState(() => {
+		if (!src) return false;
+		return shouldCreateImagePreview({ url: src });
+	});
+
+	useEffect(() => {
+		if (!src) {
+			setPreviewUrl(null);
+			setIsLoading(false);
+			return;
+		}
+
+		const source = { url: src };
+		if (!shouldCreateImagePreview(source)) {
+			setPreviewUrl(src);
+			setIsLoading(false);
+			return;
+		}
+
+		let isActive = true;
+		setIsLoading(true);
+
+		createImagePreviewUrl(source)
+			.then((url) => {
+				if (!isActive) return;
+				setPreviewUrl(url);
+				setIsLoading(false);
+			})
+			.catch((error) => {
+				console.error("[MyPhotosGallery] Preview error:", error);
+				if (!isActive) return;
+				setPreviewUrl(src);
+				setIsLoading(false);
+			});
+
+		return () => {
+			isActive = false;
+		};
+	}, [src]);
+
+	useEffect(() => {
+		return () => {
+			revokePreviewUrl(previewUrl);
+		};
+	}, [previewUrl]);
+
+	const resolvedSrc = previewUrl ?? transparentPixel;
+
+	return (
+		<img
+			src={resolvedSrc}
+			alt={alt}
+			aria-busy={isLoading}
+			className={className}
+			{...props}
+		/>
 	);
 }
 
@@ -588,3 +663,12 @@ interface SelectedPhotoSet {
 	photos: SelectedPhoto[];
 	index: number;
 }
+
+interface HeicPreviewImageProps
+	extends Omit<ComponentPropsWithoutRef<"img">, "src" | "alt"> {
+	src: string;
+	alt: string;
+}
+
+const transparentPixel =
+	"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";

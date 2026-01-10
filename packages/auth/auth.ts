@@ -37,6 +37,27 @@ const getLocaleFromRequest = (request?: Request) => {
 
 const appUrl = getBaseUrl();
 
+function formatNewUserSupportText(params: {
+	name: string;
+	email: string;
+	userId: string;
+	createdAt: string;
+	signupPath?: string;
+}) {
+	const { name, email, userId, createdAt, signupPath } = params;
+	const lines = [
+		"New user registered",
+		`Email: ${email}`,
+		`Name: ${name}`,
+		`User ID: ${userId}`,
+		`Created at: ${createdAt}`,
+	];
+
+	if (signupPath) lines.push(`Signup path: ${signupPath}`);
+
+	return lines.join("\n");
+}
+
 export const auth = betterAuth({
 	baseURL: appUrl,
 	trustedOrigins: [appUrl],
@@ -47,6 +68,32 @@ export const auth = betterAuth({
 	advanced: {
 		database: {
 			generateId: false,
+		},
+	},
+	databaseHooks: {
+		user: {
+			create: {
+				after: async (user, context) => {
+					if (!user?.email) return;
+
+					const createdAt = user.createdAt
+						? user.createdAt.toISOString()
+						: new Date().toISOString();
+					const text = formatNewUserSupportText({
+						name: user.name ?? "Unknown",
+						email: user.email,
+						userId: user.id,
+						createdAt,
+						signupPath: context?.path,
+					});
+
+					await sendEmail({
+						to: "support@photorestoration.photo",
+						subject: `New user registered: ${user.email}`,
+						text,
+					});
+				},
+			},
 		},
 	},
 	session: {

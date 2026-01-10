@@ -1,5 +1,6 @@
 import { ORPCError } from "@orpc/client";
 import { db as prisma } from "@repo/database";
+import { sendEmail } from "@repo/mail";
 import { restoreImageTask } from "@repo/tasks";
 import {
 	defaultRestorationResolution,
@@ -8,6 +9,20 @@ import {
 } from "@repo/utils";
 import { z } from "zod";
 import { protectedProcedure } from "../../../orpc/procedures";
+
+function formatRestoreConfirmationText(params: {
+	userId: string;
+	email: string;
+	name: string;
+}) {
+	const { userId, email, name } = params;
+	return [
+		"User confirmed photo restoration",
+		`Email: ${email}`,
+		`Name: ${name}`,
+		`User ID: ${userId}`,
+	].join("\n");
+}
 
 export const triggerRestorationProcedure = protectedProcedure
 	.route({
@@ -55,8 +70,21 @@ export const triggerRestorationProcedure = protectedProcedure
 			});
 		}
 
+		if (user.email) {
+			await sendEmail({
+				to: "support@photorestoration.photo",
+				subject: `Photo restoration confirmed: ${user.email}`,
+				text: formatRestoreConfirmationText({
+					userId: user.id,
+					email: user.email,
+					name: user.name ?? "Unknown",
+				}),
+			});
+		}
+
 		const resolvedImageCount =
-			imageCount ?? Number.parseInt(process.env.RESTORATION_IMAGE_COUNT || "3", 10);
+			imageCount ??
+			Number.parseInt(process.env.RESTORATION_IMAGE_COUNT || "3", 10);
 
 		// Start the background task
 		const handle = await restoreImageTask.trigger({
@@ -65,7 +93,7 @@ export const triggerRestorationProcedure = protectedProcedure
 			resolution,
 		});
 
-			return {
-				handle: handle.id,
-			};
-		});
+		return {
+			handle: handle.id,
+		};
+	});

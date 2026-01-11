@@ -306,10 +306,79 @@ export const restoreImageTask = task({
 					}),
 				),
 			);
+
+			try {
+				const userRecord = await prisma.user.findUnique({
+					where: { id: userId },
+					select: { id: true, email: true, name: true },
+				});
+
+				if (userRecord?.email) {
+					await sendSupportFailureEmail({
+						to: "support@photorestoration.photo",
+						subject: `Photo restoration failed: ${userRecord.email}`,
+						text: formatRestoreFailureText({
+							userId: userRecord.id,
+							email: userRecord.email,
+							name: userRecord.name ?? "Unknown",
+						}),
+					});
+				}
+			} catch (notificationError) {
+				console.error("[restore-image] Failed to send failure email", {
+					error:
+						notificationError instanceof Error
+							? notificationError.message
+							: String(notificationError),
+				});
+			}
+
 			throw error;
 		}
 	},
 });
+
+function formatRestoreFailureText(params: {
+	userId: string;
+	email: string;
+	name: string;
+}) {
+	const { userId, email, name } = params;
+	return [
+		"Photo restoration failed",
+		`Email: ${email}`,
+		`Name: ${name}`,
+		`User ID: ${userId}`,
+	].join("\n");
+}
+
+async function sendSupportFailureEmail(params: {
+	to: string;
+	subject: string;
+	text: string;
+}) {
+	const { to, subject, text } = params;
+	const response = await fetch("https://api.useplunk.com/v1/send", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${process.env.PLUNK_API_KEY}`,
+		},
+		body: JSON.stringify({
+			to,
+			subject,
+			body: text,
+			text,
+		}),
+	});
+
+	if (!response.ok) {
+		console.error("[restore-image] Failed to send failure email", {
+			status: response.status,
+			statusText: response.statusText,
+		});
+	}
+}
 
 const restorationResolutionIds = ["1k", "2k", "4k"] as const;
 
